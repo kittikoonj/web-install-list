@@ -1,0 +1,53 @@
+<div class="login-page">
+  <div class="login-card card">
+    <div class="login-header">
+      <i class="ti ti-list-check logo"></i>
+      <h1>Install List Manager</h1>
+      <p class="company">Your Company Name</p>
+    </div>
+
+    @if (error()) {
+      <div class="error-msg">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="form-group">
+        <label for="email">อีเมล</label>
+        <input id="email" type="email" [(ngModel)]="email" name="email" required autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">รหัสผ่าน</label>
+        <div class="password-wrap">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="icon-btn toggle-pw" (click)="showPassword = !showPassword">
+            <i class="ti" [class]="showPassword ? 'ti-eye-off' : 'ti-eye'"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary login-btn" [disabled]="loading()">
+        {{ loading() ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
+      </button>
+    </form>
+
+    <a href="#" class="forgot-link" (click)="$event.preventDefault()">ลืมรหัสผ่าน?</a>
+
+    <div class="roles-summary">
+      <h3>สิทธิ์ตาม Role</h3>
+      @for (r of roles; track r.role) {
+        <div class="role-row">
+          <strong>{{ r.role }}</strong>
+          <span>{{ r.desc }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</div>

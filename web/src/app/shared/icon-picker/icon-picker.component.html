@@ -1,0 +1,51 @@
+<div class="icon-picker">
+  <div class="color-bar">
+    @for (color of palette; track color.name) {
+      <button
+        type="button"
+        class="color-swatch"
+        [style.background]="color.bg"
+        [class.active]="selectedBg === color.bg"
+        (click)="selectColor(color)"
+        [title]="color.name"
+      >
+        <i class="ti ti-database" [style.color]="color.fg"></i>
+      </button>
+    }
+  </div>
+
+  <div class="category-bar">
+    @for (cat of categories; track cat) {
+      <button
+        type="button"
+        class="cat-btn"
+        [class.active]="activeCategory() === cat"
+        (click)="activeCategory.set(cat)"
+      >
+        {{ cat }}
+      </button>
+    }
+  </div>
+
+  <input
+    type="text"
+    class="icon-search"
+    placeholder="ค้นหา icon..."
+    [ngModel]="search()"
+    (ngModelChange)="search.set($event)"
+  />
+
+  <div class="icon-grid">
+    @for (icon of filteredIcons(); track icon) {
+      <button
+        type="button"
+        class="icon-cell"
+        [class.selected]="selectedIcon === icon"
+        [style.background]="selectedIcon === icon ? selectedBg : 'transparent'"
+        (click)="selectIcon(icon)"
+      >
+        <i class="ti" [class]="icon" [style.color]="selectedIcon === icon ? selectedFg : '#666'"></i>
+      </button>
+    }
+  </div>
+</div>

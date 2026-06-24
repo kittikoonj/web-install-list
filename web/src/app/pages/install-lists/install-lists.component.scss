@@ -1,0 +1,410 @@
+.actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+}
+
+.list-row {
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(.deleted) {
+    background: #fafaf9;
+  }
+
+  &.expanded {
+    background: #f5f8fc;
+  }
+}
+
+.expand-icon {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.detail-row td {
+  padding: 0;
+  background: #fafaf9;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detail-loading,
+.detail-empty {
+  padding: 16px 20px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.detail-section {
+  padding: 12px 20px;
+
+  & + & {
+    border-top: 1px solid var(--color-border);
+  }
+}
+
+.detail-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.customer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th, td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  a {
+    word-break: break-all;
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+}
+
+.form-section {
+  margin-bottom: 20px;
+
+  > label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  label {
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+.section-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+  padding: 8px 0;
+}
+
+.customer-form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customer-form-row {
+  display: grid;
+  grid-template-columns: 1fr 168px 132px 1fr 28px;
+  gap: 8px;
+  align-items: start;
+  padding: 10px;
+  background: #fafaf9;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+
+  .form-group {
+    margin-bottom: 0;
+
+    label {
+      font-size: 11px;
+      margin-bottom: 4px;
+      color: var(--color-text-muted);
+    }
+
+    input {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+  }
+
+  .remove-btn {
+    color: var(--color-danger);
+    margin-top: 20px;
+    padding: 2px;
+  }
+}
+
+.installer-form-group {
+  position: relative;
+}
+
+.installer-picker {
+  position: relative;
+}
+
+.installer-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: #ccc;
+  }
+
+  &.open,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px #c8dff5;
+  }
+
+  &.has-value .installer-label {
+    color: #1a1a1a;
+  }
+}
+
+.installer-icon {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.installer-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.placeholder {
+    color: var(--color-text-muted);
+  }
+}
+
+.installer-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+
+  &:hover {
+    background: #f0f0ee;
+    color: #333;
+  }
+}
+
+.installer-chevron {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.installer-trigger.open .installer-chevron {
+  transform: rotate(180deg);
+}
+
+.installer-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.installer-search {
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    background: #fafaf9;
+  }
+}
+
+.installer-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.installer-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+
+  &:hover,
+  &.selected {
+    background: #e6f1fb;
+    color: var(--color-primary);
+  }
+
+  .option-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .option-email {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &.selected .option-email,
+  &:hover .option-email {
+    color: #4a7aa8;
+  }
+}
+
+.installer-empty-item {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.installer-empty {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+@media (max-width: 700px) {
+  .customer-form-row {
+    grid-template-columns: 1fr;
+
+    .remove-btn {
+      margin-top: 0;
+    }
+  }
+}
+
+.program-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.program-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.method-badges {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.deleted-label {
+  background: #f1efe8;
+  color: #444441;
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+.program-select-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.program-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.program-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+
+.program-name {
+  font-weight: 500;
+}
+
+.version-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f1efe8;
+  color: #444441;
+  font-weight: 500;
+}
+
+.method-checks {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}

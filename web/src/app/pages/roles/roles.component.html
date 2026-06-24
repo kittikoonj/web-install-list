@@ -1,0 +1,45 @@
+<div class="page-header">
+  <h1>Roles & Permissions</h1>
+  @if (hasChanges()) {
+    <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+      {{ saving() ? 'กำลังบันทึก...' : 'บันทึก' }}
+    </button>
+  }
+</div>
+
+@if (matrix(); as m) {
+  <div class="card table-wrap">
+    <table class="data-table perm-matrix">
+      <thead>
+        <tr>
+          <th>Menu</th>
+          @for (role of m.roles; track role.id) {
+            <th class="role-col">{{ role.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (menu of m.menus; track menu.key) {
+          <tr>
+            <td>{{ menu.label }}</td>
+            @for (role of m.roles; track role.id) {
+              <td class="check-col">
+                @if (isLocked(role.name)) {
+                  <i class="ti ti-lock locked" title="Super Admin เห็นทุก menu"></i>
+                } @else {
+                  <input
+                    type="checkbox"
+                    [checked]="isChecked(role.id, menu.key)"
+                    (change)="toggle(role.id, menu.key, role.name)"
+                  />
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <div class="empty-state">กำลังโหลด...</div>
+}

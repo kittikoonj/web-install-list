@@ -1,0 +1,292 @@
+<div class="page-header">
+  <h1>Install Lists</h1>
+  <button class="btn btn-primary" (click)="openCreate()">
+    <i class="ti ti-plus"></i> Create List
+  </button>
+</div>
+
+<div class="search-bar">
+  <input
+    type="text"
+    placeholder="ค้นหาชื่อ list, ลูกค้า, ผู้ติดตั้ง, program..."
+    [(ngModel)]="search"
+    (keyup.enter)="load()"
+  />
+  <button class="btn" (click)="load()">ค้นหา</button>
+  <div class="toggle-group">
+    <button [class.active]="activeOnly()" (click)="toggleFilter(true)">active เท่านั้น</button>
+    <button [class.active]="!activeOnly()" (click)="toggleFilter(false)">ทั้งหมด</button>
+  </div>
+</div>
+
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ชื่อ List</th>
+        <th>Programs</th>
+        <th>ลูกค้า</th>
+        <th>ผู้สร้าง</th>
+        <th>วันที่สร้าง</th>
+        <th>แก้ไขล่าสุด</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (list of lists(); track list.id) {
+        <tr
+          class="list-row"
+          [class.deleted]="list.isDelete"
+          [class.expanded]="isExpanded(list.id)"
+          (click)="toggleExpand(list)"
+        >
+          <td>
+            <i
+              class="ti expand-icon"
+              [class]="isExpanded(list.id) ? 'ti-chevron-down' : 'ti-chevron-right'"
+            ></i>
+            {{ list.name }}
+            @if (list.isDelete) {
+              <span class="badge deleted-label">ถูกลบ</span>
+            }
+          </td>
+          <td>{{ list.programCount ?? list.items?.length ?? 0 }}</td>
+          <td>{{ list.customerCount ?? list.customers?.length ?? 0 }}</td>
+          <td>{{ list.createdBy }}</td>
+          <td>{{ list.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ list.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="actions">
+            <button class="btn btn-sm" (click)="$event.stopPropagation(); openEdit(list)">Edit List</button>
+            @if (!list.isDelete) {
+              <button class="btn btn-sm btn-danger" (click)="$event.stopPropagation(); deleteList(list)">Del List</button>
+            }
+          </td>
+        </tr>
+        @if (isExpanded(list.id)) {
+          <tr class="detail-row">
+            <td colspan="7">
+              @if (loadingDetail() === list.id) {
+                <div class="detail-loading">กำลังโหลด...</div>
+              } @else {
+                @if (groupedPrograms(list.id).length) {
+                  <div class="detail-section">
+                    <div class="detail-section-title">Programs</div>
+                    <div class="program-detail-list">
+                      @for (group of groupedPrograms(list.id); track group.program.id) {
+                        <div class="program-detail-item">
+                          <span class="program-icon" [style.background]="group.program.iconBg">
+                            <i class="ti" [class]="group.program.icon" [style.color]="group.program.iconFg"></i>
+                          </span>
+                          <span class="program-name">{{ group.program.name }}</span>
+                          @if (group.program.version) {
+                            <span class="version-badge">{{ group.program.version }}</span>
+                          }
+                          <div class="method-badges">
+                            @for (m of group.methods; track m) {
+                              <app-method-badge [method]="m" />
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (sortedCustomers(list.id).length) {
+                  <div class="detail-section">
+                    <div class="detail-section-title">ลูกค้าที่ติดตั้งแล้ว</div>
+                    <table class="customer-table">
+                      <thead>
+                        <tr>
+                          <th>ชื่อ Site / ลูกค้า</th>
+                          <th>ผู้ติดตั้ง</th>
+                          <th>วันที่ติดตั้ง</th>
+                          <th>Test Case URL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (c of sortedCustomers(list.id); track c.id) {
+                          <tr>
+                            <td>{{ c.customerName }}</td>
+                            <td>{{ c.installerName || '—' }}</td>
+                            <td>{{ c.installedAt | date:'dd/MM/yyyy' }}</td>
+                            <td>
+                              @if (c.testCaseUrl) {
+                                <a [href]="c.testCaseUrl" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
+                                  {{ c.testCaseUrl }}
+                                </a>
+                              } @else {
+                                <span class="text-muted">—</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+
+                @if (!groupedPrograms(list.id).length && !sortedCustomers(list.id).length) {
+                  <div class="detail-empty">ไม่มีข้อมูลใน list นี้</div>
+                }
+              }
+            </td>
+          </tr>
+        }
+      } @empty {
+        <tr><td colspan="7" class="empty-state">ไม่มี install list</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editing() ? 'Edit List' : 'Create List' }}</h2>
+        <button class="icon-btn" (click)="showModal.set(false)"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>ชื่อ list *</label>
+          <input type="text" [(ngModel)]="listName" />
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <label>ลูกค้าที่ติดตั้งแล้ว</label>
+            <button type="button" class="btn btn-sm" (click)="addCustomerRow()">
+              <i class="ti ti-plus"></i> เพิ่มลูกค้า
+            </button>
+          </div>
+          @if (customerRows().length) {
+            <div class="customer-form-list">
+              @for (row of customerRows(); track $index; let rowIndex = $index) {
+                <div class="customer-form-row">
+                  <div class="form-group">
+                    <label>ชื่อ Site / ลูกค้า</label>
+                    <input type="text" [(ngModel)]="row.customerName" placeholder="เช่น ACME Corp" />
+                  </div>
+                  <div class="form-group installer-form-group">
+                    <label>ผู้ติดตั้ง *</label>
+                    @if (installerUsers().length) {
+                      <div class="installer-picker" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="installer-trigger"
+                          [class.has-value]="row.installerName"
+                          [class.open]="openInstallerPicker() === rowIndex"
+                          (click)="toggleInstallerPicker(rowIndex, $event)"
+                        >
+                          <i class="ti ti-user installer-icon"></i>
+                          <span class="installer-label" [class.placeholder]="!row.installerName">
+                            {{ row.installerName || 'เลือกผู้ติดตั้ง' }}
+                          </span>
+                          @if (row.installerName) {
+                            <span
+                              class="installer-clear"
+                              (click)="selectInstaller(rowIndex, null); $event.stopPropagation()"
+                            >
+                              <i class="ti ti-x"></i>
+                            </span>
+                          }
+                          <i class="ti ti-chevron-down installer-chevron"></i>
+                        </button>
+                        @if (openInstallerPicker() === rowIndex) {
+                          <div class="installer-dropdown">
+                            <input
+                              type="text"
+                              class="installer-search"
+                              placeholder="ค้นหา..."
+                              [ngModel]="installerFilter()"
+                              (ngModelChange)="installerFilter.set($event)"
+                              (click)="$event.stopPropagation()"
+                            />
+                            <ul class="installer-list">
+                              @for (
+                                u of filteredInstallerUsersForRow(row, installerFilter());
+                                track u.id
+                              ) {
+                                <li>
+                                  <button
+                                    type="button"
+                                    class="installer-option"
+                                    [class.selected]="row.installerName === u.name"
+                                    (click)="selectInstaller(rowIndex, u.name)"
+                                  >
+                                    <span class="option-name">{{ u.name }}</span>
+                                    @if (u.email) {
+                                      <span class="option-email">{{ u.email }}</span>
+                                    }
+                                  </button>
+                                </li>
+                              } @empty {
+                                <li class="installer-empty-item">ไม่พบ user</li>
+                              }
+                            </ul>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="installer-empty">ไม่พบ user ในระบบ</p>
+                    }
+                  </div>
+                  <div class="form-group">
+                    <label>วันที่ติดตั้ง</label>
+                    <input type="date" [(ngModel)]="row.installedAt" />
+                  </div>
+                  <div class="form-group">
+                    <label>Test Case URL</label>
+                    <input type="url" [(ngModel)]="row.testCaseUrl" placeholder="https://..." />
+                  </div>
+                  <button type="button" class="icon-btn remove-btn" (click)="removeCustomerRow($index)" title="ลบ">
+                    <i class="ti ti-trash"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="section-hint">ยังไม่มีลูกค้า — กด "เพิ่มลูกค้า" เพื่อบันทึก site ที่ติดตั้งแล้ว (ใช้ชื่อซ้ำได้)</p>
+          }
+        </div>
+
+        <div class="form-section">
+          <label>Programs *</label>
+        <div class="program-select-list">
+          @for (p of programs(); track p.id) {
+            <div class="program-select-item">
+              <div class="program-info">
+                <span class="program-icon" [style.background]="p.iconBg">
+                  <i class="ti" [class]="p.icon" [style.color]="p.iconFg"></i>
+                </span>
+                <span class="program-name">{{ p.name }}</span>
+              </div>
+              <div class="method-checks">
+                @for (m of p.methods; track m) {
+                  <label class="chip" [class.selected]="isSelected(p.id, m)">
+                    <input
+                      type="checkbox"
+                      [checked]="isSelected(p.id, m)"
+                      (change)="toggleSelection(p.id, m)"
+                    />
+                    {{ m }}
+                  </label>
+                }
+              </div>
+            </div>
+          } @empty {
+            <p class="empty-state">ไม่มี program ที่ใช้งานได้</p>
+          }
+        </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" (click)="showModal.set(false)">ยกเลิก</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'กำลังบันทึก...' : 'บันทึก' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,23 @@
+<div class="page-header">
+  <h1>ตั้งค่า <span class="admin-badge">admin</span></h1>
+</div>
+
+@if (settings(); as s) {
+  <div class="card settings-card">
+    <div class="setting-row">
+      <label>ชื่อบริษัท</label>
+      <span>{{ s['companyName'] }}</span>
+    </div>
+    <div class="setting-row">
+      <label>GitHub Organization</label>
+      <span>{{ s['githubOrg'] || '—' }}</span>
+    </div>
+    <div class="setting-row">
+      <label>Session Timeout (hours)</label>
+      <span>{{ s['sessionTimeout'] }}</span>
+    </div>
+    <p class="hint">การตั้งค่าเพิ่มเติมสามารถขยายได้ในอนาคต</p>
+  </div>
+} @else {
+  <div class="empty-state">กำลังโหลด...</div>
+}

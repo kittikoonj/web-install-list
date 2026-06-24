@@ -1,0 +1,50 @@
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e6f1fb;
+  color: #0c447c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.user-email {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.status-active {
+  background: #eaf3de;
+  color: #27500a;
+}
+
+.status-inactive {
+  background: #fcebeb;
+  color: #a32d2d;
+}
+
+.actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+}
+
+.menu-preview {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+  }
+}

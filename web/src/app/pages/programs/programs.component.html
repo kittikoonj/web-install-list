@@ -1,0 +1,128 @@
+<div class="page-header">
+  <h1>Programs</h1>
+  <button class="btn btn-primary" (click)="openCreate()">
+    <i class="ti ti-plus"></i> เพิ่ม Program
+  </button>
+</div>
+
+<div class="search-bar">
+  <input type="text" placeholder="ค้นหาชื่อ program..." [(ngModel)]="search" (keyup.enter)="load()" />
+  <button class="btn" (click)="load()">ค้นหา</button>
+</div>
+
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Program</th>
+        <th>Version</th>
+        <th>GitHub URL</th>
+        <th>Methods</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of programs(); track p.id) {
+        <tr [class.deleted]="p.isDelete">
+          <td>
+            <div class="program-cell">
+              <span class="program-icon" [style.background]="p.iconBg">
+                <i class="ti" [class]="p.icon" [style.color]="p.iconFg"></i>
+              </span>
+              <span>{{ p.name }}</span>
+              @if (p.isDelete) {
+                <span class="badge deleted-label">ถูกลบ</span>
+              }
+            </div>
+          </td>
+          <td>{{ p.version || '—' }}</td>
+          <td class="url-cell">{{ truncateUrl(p.githubUrl) }}</td>
+          <td>
+            @for (m of p.methods; track m) {
+              <app-method-badge [method]="m" />
+            }
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm" (click)="openEdit(p)">Edit</button>
+            @if (!p.isDelete) {
+              <button class="btn btn-sm btn-danger" (click)="deleteProgram(p)">Del</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty-state">ไม่มี program</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editing() ? 'แก้ไข Program' : 'เพิ่ม Program' }}</h2>
+        <button class="icon-btn" (click)="showModal.set(false)"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-main">
+            <div class="form-group">
+              <label>ชื่อ program *</label>
+              <input type="text" [(ngModel)]="form.name" />
+            </div>
+            <div class="form-group">
+              <label>Version</label>
+              <input type="text" [(ngModel)]="form.version" placeholder="เช่น 1.0.0, 8.2" />
+            </div>
+            <div class="form-group">
+              <label>GitHub repository URL *</label>
+              <input type="url" [(ngModel)]="form.githubUrl" placeholder="https://github.com/org/scripts/mariadb" />
+            </div>
+            <div class="form-group">
+              <label>วิธีติดตั้งที่รองรับ *</label>
+              <div class="chip-group">
+                @for (m of methodOptions; track m) {
+                  <label class="chip" [class.selected]="form.methods.includes(m)">
+                    <input type="checkbox" [checked]="form.methods.includes(m)" (change)="toggleMethod(m)" />
+                    {{ m }}
+                  </label>
+                }
+              </div>
+            </div>
+            <div class="form-group">
+              <label>หมายเหตุ</label>
+              <textarea [(ngModel)]="form.note" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="form-side">
+            <label>Icon & สี *</label>
+            <app-icon-picker
+              [selectedIcon]="form.icon"
+              [selectedBg]="form.iconBg"
+              [selectedFg]="form.iconFg"
+              (iconChange)="onIconChange($event)"
+            />
+            <div class="preview">
+              <label>Preview</label>
+              <div class="preview-chip">
+                <span class="program-icon" [style.background]="form.iconBg">
+                  <i class="ti" [class]="form.icon" [style.color]="form.iconFg"></i>
+                </span>
+                <span>{{ form.name || 'ชื่อ program' }}</span>
+                @if (form.version) {
+                  <span class="version-badge">{{ form.version }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" (click)="showModal.set(false)">ยกเลิก</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+          {{ saving() ? 'กำลังบันทึก...' : 'บันทึก' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

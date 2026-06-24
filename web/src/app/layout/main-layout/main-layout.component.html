@@ -1,0 +1,44 @@
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <i class="ti ti-list-check brand-icon"></i>
+      <div>
+        <div class="brand-title">Install List</div>
+        <div class="brand-sub">Manager</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (section of menuSections(); track section.section) {
+        <div class="nav-section">
+          <div class="nav-section-label">{{ section.section }}</div>
+          @for (item of section.items; track item.key) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              class="nav-item"
+            >
+              <i class="ti" [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+              @if (item.adminBadge) {
+                <span class="admin-badge">admin</span>
+              }
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-name">{{ user()?.name }}</div>
+      <div class="user-role">{{ user()?.role?.label }}</div>
+      <button class="btn btn-sm logout-btn" (click)="logout()">
+        <i class="ti ti-logout"></i> ออกจากระบบ
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

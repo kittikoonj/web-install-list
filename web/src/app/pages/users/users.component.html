@@ -1,0 +1,112 @@
+<div class="page-header">
+  <h1>User Management</h1>
+  <button class="btn btn-primary" (click)="openCreate()">
+    <i class="ti ti-plus"></i> เพิ่ม User
+  </button>
+</div>
+
+<div class="search-bar">
+  <input type="text" placeholder="ค้นหาชื่อหรืออีเมล..." [(ngModel)]="search" (keyup.enter)="load()" />
+  <select [(ngModel)]="roleFilter" (change)="load()">
+    <option value="">ทุก Role</option>
+    @for (r of roles(); track r.id) {
+      <option [value]="r.id">{{ r.label }}</option>
+    }
+  </select>
+  <button class="btn" (click)="load()">ค้นหา</button>
+</div>
+
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>ชื่อ / อีเมล</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (u of users(); track u.id) {
+        <tr>
+          <td><div class="avatar">{{ initials(u.name) }}</div></td>
+          <td>
+            <div class="user-name">{{ u.name }}</div>
+            <div class="user-email">{{ u.email }}</div>
+          </td>
+          <td>
+            <app-role-badge [roleName]="u.role.name" [label]="u.role.label" />
+          </td>
+          <td>
+            <span class="badge" [class.status-active]="u.status === 'active'" [class.status-inactive]="u.status === 'inactive'">
+              {{ u.status }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn btn-sm" (click)="openEdit(u)">Edit</button>
+            <button class="btn btn-sm btn-danger" (click)="deleteUser(u)">Del</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty-state">ไม่มี user</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editing() ? 'แก้ไข User' : 'เพิ่ม User' }}</h2>
+        <button class="icon-btn" (click)="showModal.set(false)"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>ชื่อ-นามสกุล *</label>
+          <input type="text" [(ngModel)]="form.name" />
+        </div>
+        <div class="form-group">
+          <label>อีเมล *</label>
+          <input type="email" [(ngModel)]="form.email" />
+        </div>
+        @if (!editing() || changePassword) {
+          <div class="form-group">
+            <label>{{ editing() ? 'รหัสผ่านใหม่ *' : 'รหัสผ่าน *' }}</label>
+            <input type="password" [(ngModel)]="form.password" />
+          </div>
+        } @else {
+          <button class="btn btn-sm" type="button" (click)="changePassword = true">เปลี่ยนรหัสผ่าน</button>
+        }
+        <div class="form-group">
+          <label>Role *</label>
+          <select [(ngModel)]="form.roleId">
+            @for (r of roles(); track r.id) {
+              <option [value]="r.id">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>สถานะ</label>
+          <select [(ngModel)]="form.status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="menu-preview">
+          <label>เมนูที่ user จะเห็น:</label>
+          <div class="chip-group">
+            @for (m of previewMenus(); track m) {
+              <span class="chip selected">{{ m }}</span>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" (click)="showModal.set(false)">ยกเลิก</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+}
