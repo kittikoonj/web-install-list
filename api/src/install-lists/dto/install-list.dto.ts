@@ -68,3 +68,9 @@ export class UpdateInstallListDto {
   @Type(() => InstallListCustomerDto)
   customers?: InstallListCustomerDto[];
 }
+
+export class CloneInstallListDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+}

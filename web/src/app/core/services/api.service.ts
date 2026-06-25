@@ -78,6 +78,14 @@ export class ApiService {
     return this.http.delete(`${this.base}/install-lists/${id}`, this.opts);
   }
 
+  cloneInstallList(id: number, name?: string) {
+    return this.http.post<InstallList>(
+      `${this.base}/install-lists/${id}/clone`,
+      { name },
+      this.opts,
+    );
+  }
+
   // Issues
   getIssues(search?: string, installListId?: number, includeDeleted = false) {
     let params = new HttpParams();

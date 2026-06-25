@@ -264,6 +264,13 @@ export class InstallListsComponent implements OnInit {
     this.api.deleteInstallList(list.id).subscribe(() => this.load());
   }
 
+  cloneList(list: InstallList, event: MouseEvent) {
+    event.stopPropagation();
+    const name = prompt('ชื่อ list ใหม่', `${list.name} (Copy)`);
+    if (!name?.trim()) return;
+    this.api.cloneInstallList(list.id, name.trim()).subscribe(() => this.load());
+  }
+
   toggleExpand(list: InstallList) {
     if (this.expandedId() === list.id) {
       this.expandedId.set(null);

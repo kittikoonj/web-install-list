@@ -11,7 +11,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { InstallListsService } from './install-lists.service';
-import { CreateInstallListDto, UpdateInstallListDto } from './dto/install-list.dto';
+import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto } from './dto/install-list.dto';
 import { SessionGuard } from '../common/guards/session.guard';
 import { RequireMenu } from '../common/decorators/require-menu.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -39,6 +39,15 @@ export class InstallListsController {
   @Post()
   create(@Body() dto: CreateInstallListDto, @CurrentUser() user: User) {
     return this.installListsService.create(dto, user.name);
+  }
+
+  @Post(':id/clone')
+  clone(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CloneInstallListDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.installListsService.clone(id, dto, user.name);
   }
 
   @Put(':id')

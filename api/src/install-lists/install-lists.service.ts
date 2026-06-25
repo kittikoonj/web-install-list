@@ -4,7 +4,7 @@ import { Repository, Brackets } from 'typeorm';
 import { InstallList } from '../entities/install-list.entity';
 import { InstallListItem } from '../entities/install-list-item.entity';
 import { InstallListCustomer } from '../entities/install-list-customer.entity';
-import { CreateInstallListDto, UpdateInstallListDto } from './dto/install-list.dto';
+import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto } from './dto/install-list.dto';
 import { AuditService } from '../common/audit.service';
 import { attachmentPublicPath } from '../issues/issue-upload.util';
 
@@ -155,6 +155,24 @@ export class InstallListsService {
     });
 
     return this.findOne(id);
+  }
+
+  async clone(id: number, dto: CloneInstallListDto, performedBy: string) {
+    const source = await this.findOne(id);
+    const payload: CreateInstallListDto = {
+      name: dto.name?.trim() || `${source.name} (Copy)`,
+      items: (source.items ?? []).map((item) => ({
+        programId: item.programId,
+        method: item.method,
+      })),
+      customers: (source.customers ?? []).map((c) => ({
+        customerName: c.customerName,
+        installerName: c.installerName ?? '',
+        installedAt: c.installedAt,
+        testCaseUrl: c.testCaseUrl ?? undefined,
+      })),
+    };
+    return this.create(payload, performedBy);
   }
 
   async softDelete(id: number, performedBy: string) {
