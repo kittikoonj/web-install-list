@@ -20,6 +20,7 @@ import { Program } from './entities/program.entity';
 import { InstallList } from './entities/install-list.entity';
 import { InstallListItem } from './entities/install-list-item.entity';
 import { InstallListCustomer } from './entities/install-list-customer.entity';
+import { InstallListCustomerItem } from './entities/install-list-customer-item.entity';
 import { Issue } from './entities/issue.entity';
 import { IssueAttachment } from './entities/issue-attachment.entity';
 import { IssueComment } from './entities/issue-comment.entity';
@@ -45,6 +46,7 @@ import { AuditLog } from './entities/audit-log.entity';
           InstallList,
           InstallListItem,
           InstallListCustomer,
+          InstallListCustomerItem,
           Issue,
           IssueAttachment,
           IssueComment,

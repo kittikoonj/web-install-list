@@ -10,6 +10,7 @@ import {
   InstallMethod,
   InstallListItem,
   InstallListCustomer,
+  CustomerInstall,
   Issue,
   IssueStatus,
 } from '../../core/models';
@@ -42,6 +43,7 @@ interface ListDetail {
   items: InstallListItem[];
   customers: InstallListCustomer[];
   issues: Issue[];
+  customerInstalls: CustomerInstall[];
 }
 
 @Component({
@@ -250,6 +252,7 @@ export class InstallListsComponent implements OnInit {
                 items: full.items ?? [],
                 customers: full.customers ?? [],
                 issues: full.issues ?? [],
+                customerInstalls: full.customerInstalls ?? [],
               }),
             );
           });
@@ -299,6 +302,7 @@ export class InstallListsComponent implements OnInit {
             items: full.items ?? [],
             customers: full.customers ?? [],
             issues: full.issues ?? [],
+            customerInstalls: full.customerInstalls ?? [],
           }),
         );
         this.loadingDetail.set(null);
@@ -313,33 +317,53 @@ export class InstallListsComponent implements OnInit {
 
   getDetail(listId: number): ListDetail {
     return (
-      this.listDetails().get(listId) ?? { items: [], customers: [], issues: [] }
+      this.listDetails().get(listId) ?? {
+        items: [],
+        customers: [],
+        issues: [],
+        customerInstalls: [],
+      }
     );
   }
 
-  installProgress(listId: number): { done: number; total: number } {
+  customerInstallProgress(
+    listId: number,
+    customerId: number,
+  ): { done: number; total: number } {
     const items = this.getDetail(listId).items;
     const total = items.length;
-    const done = items.filter((item) => !!item.isInstalled).length;
+    const done = items.filter((item) =>
+      this.isCustomerItemInstalled(listId, customerId, item.id!),
+    ).length;
     return { done, total };
   }
 
-  isItemInstalled(item: InstallListItem): boolean {
-    return !!item.isInstalled;
+  isCustomerItemInstalled(listId: number, customerId: number, itemId: number): boolean {
+    return this.getDetail(listId).customerInstalls.some(
+      (ci) => ci.customerId === customerId && ci.itemId === itemId && ci.isInstalled,
+    );
   }
 
-  toggleInstalled(listId: number, item: InstallListItem, event: Event) {
-    if (!item.id || !this.canWrite()) return;
+  toggleCustomerInstalled(
+    listId: number,
+    customerId: number,
+    item: InstallListItem,
+    event: Event,
+  ) {
+    if (!item.id || !customerId || !this.canWrite()) return;
     const checked = (event.target as HTMLInputElement).checked;
-    this.api.toggleInstallListItemInstalled(listId, item.id, checked).subscribe({
+    this.api.toggleCustomerItemInstalled(listId, customerId, item.id, checked).subscribe({
       next: (updated) => {
         this.listDetails.update((m) => {
           const detail = m.get(listId);
           if (!detail) return m;
-          const items = detail.items.map((i) =>
-            i.id === item.id ? { ...i, isInstalled: updated.isInstalled } : i,
+          const others = detail.customerInstalls.filter(
+            (ci) => !(ci.customerId === customerId && ci.itemId === item.id),
           );
-          return new Map(m).set(listId, { ...detail, items });
+          const customerInstalls = updated.isInstalled
+            ? [...others, updated]
+            : others;
+          return new Map(m).set(listId, { ...detail, customerInstalls });
         });
       },
       error: () => {

@@ -89,6 +89,45 @@
   }
 }
 
+.customer-site-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.customer-site-card {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fafaf9;
+  padding: 12px 14px;
+}
+
+.site-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.site-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.site-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+
+  a {
+    color: var(--color-primary);
+  }
+}
+
 .detail-empty-inline {
   font-size: 13px;
   color: var(--color-text-muted);

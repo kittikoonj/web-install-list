@@ -96,32 +96,23 @@
               } @else {
                 @if (getDetail(list.id).items.length) {
                   <div class="detail-section">
-                    <div class="detail-section-header">
-                      <div class="detail-section-title">Programs</div>
-                      @if (installProgress(list.id).total) {
-                        <span class="install-progress">
-                          ติดตั้งแล้ว {{ installProgress(list.id).done }}/{{ installProgress(list.id).total }}
-                        </span>
-                      }
-                    </div>
-                    <div class="checklist">
-                      @for (item of getDetail(list.id).items; track item.id) {
-                        <label class="checklist-item" (click)="$event.stopPropagation()">
-                          <input
-                            type="checkbox"
-                            [checked]="isItemInstalled(item)"
-                            [disabled]="!canWrite()"
-                            (change)="toggleInstalled(list.id, item, $event)"
-                          />
-                          <span class="program-icon" [style.background]="item.program?.iconBg">
-                            <i class="ti" [class]="item.program?.icon" [style.color]="item.program?.iconFg"></i>
+                    <div class="detail-section-title">Programs</div>
+                    <div class="program-detail-list">
+                      @for (group of groupedPrograms(list.id); track group.program.id) {
+                        <div class="program-detail-item">
+                          <span class="program-icon" [style.background]="group.program.iconBg">
+                            <i class="ti" [class]="group.program.icon" [style.color]="group.program.iconFg"></i>
                           </span>
-                          <span class="program-name">{{ item.program?.name }}</span>
-                          @if (item.program?.version) {
-                            <span class="version-badge">{{ item.program?.version }}</span>
+                          <span class="program-name">{{ group.program.name }}</span>
+                          @if (group.program.version) {
+                            <span class="version-badge">{{ group.program.version }}</span>
                           }
-                          <app-method-badge [method]="item.method" />
-                        </label>
+                          <div class="method-badges">
+                            @for (m of group.methods; track m) {
+                              <app-method-badge [method]="m" />
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
                   </div>
@@ -129,35 +120,52 @@
 
                 @if (sortedCustomers(list.id).length) {
                   <div class="detail-section">
-                    <div class="detail-section-title">ลูกค้าที่ติดตั้งแล้ว</div>
-                    <table class="customer-table">
-                      <thead>
-                        <tr>
-                          <th>ชื่อ Site / ลูกค้า</th>
-                          <th>ผู้ติดตั้ง</th>
-                          <th>วันที่ติดตั้ง</th>
-                          <th>Test Case URL</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (c of sortedCustomers(list.id); track c.id) {
-                          <tr>
-                            <td>{{ c.customerName }}</td>
-                            <td>{{ c.installerName || '—' }}</td>
-                            <td>{{ c.installedAt | date:'dd/MM/yyyy' }}</td>
-                            <td>
-                              @if (c.testCaseUrl) {
-                                <a [href]="c.testCaseUrl" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
-                                  {{ c.testCaseUrl }}
-                                </a>
-                              } @else {
-                                <span class="text-muted">—</span>
+                    <div class="detail-section-title">ลูกค้า / Site</div>
+                    <div class="customer-site-list">
+                      @for (c of sortedCustomers(list.id); track c.id) {
+                        <div class="customer-site-card" (click)="$event.stopPropagation()">
+                          <div class="site-header">
+                            <div class="site-info">
+                              <div class="site-name">{{ c.customerName }}</div>
+                              <div class="site-meta">
+                                <span>ผู้ติดตั้ง: {{ c.installerName || '—' }}</span>
+                                <span>วันที่: {{ c.installedAt | date:'dd/MM/yyyy' }}</span>
+                                @if (c.testCaseUrl) {
+                                  <a [href]="c.testCaseUrl" target="_blank" rel="noopener">Test Case</a>
+                                }
+                              </div>
+                            </div>
+                            @if (getDetail(list.id).items.length) {
+                              <span class="install-progress">
+                                ติดตั้งแล้ว {{ customerInstallProgress(list.id, c.id!).done }}/{{ customerInstallProgress(list.id, c.id!).total }}
+                              </span>
+                            }
+                          </div>
+                          @if (getDetail(list.id).items.length) {
+                            <div class="checklist">
+                              @for (item of getDetail(list.id).items; track item.id) {
+                                <label class="checklist-item">
+                                  <input
+                                    type="checkbox"
+                                    [checked]="isCustomerItemInstalled(list.id, c.id!, item.id!)"
+                                    [disabled]="!canWrite()"
+                                    (change)="toggleCustomerInstalled(list.id, c.id!, item, $event)"
+                                  />
+                                  <span class="program-icon" [style.background]="item.program?.iconBg">
+                                    <i class="ti" [class]="item.program?.icon" [style.color]="item.program?.iconFg"></i>
+                                  </span>
+                                  <span class="program-name">{{ item.program?.name }}</span>
+                                  @if (item.program?.version) {
+                                    <span class="version-badge">{{ item.program?.version }}</span>
+                                  }
+                                  <app-method-badge [method]="item.method" />
+                                </label>
                               }
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Program, InstallList, InstallListItem, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats } from '../models';
+import { Program, InstallList, InstallListItem, CustomerInstall, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -94,9 +94,14 @@ export class ApiService {
     });
   }
 
-  toggleInstallListItemInstalled(listId: number, itemId: number, isInstalled: boolean) {
-    return this.http.patch<InstallListItem>(
-      `${this.base}/install-lists/${listId}/items/${itemId}/installed`,
+  toggleCustomerItemInstalled(
+    listId: number,
+    customerId: number,
+    itemId: number,
+    isInstalled: boolean,
+  ) {
+    return this.http.patch<CustomerInstall>(
+      `${this.base}/install-lists/${listId}/customers/${customerId}/items/${itemId}/installed`,
       { isInstalled },
       this.opts,
     );

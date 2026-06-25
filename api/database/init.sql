@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS install_list_items (
   list_id INT NOT NULL,
   program_id INT NOT NULL,
   method ENUM('offline','docker','online') NOT NULL,
-  is_installed TINYINT DEFAULT 0,
   FOREIGN KEY (list_id) REFERENCES install_lists(id) ON DELETE CASCADE,
   FOREIGN KEY (program_id) REFERENCES programs(id)
 );
@@ -78,6 +77,16 @@ CREATE TABLE IF NOT EXISTS install_list_customers (
   installed_at DATE NOT NULL,
   test_case_url VARCHAR(500),
   FOREIGN KEY (list_id) REFERENCES install_lists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS install_list_customer_items (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  customer_id INT NOT NULL,
+  item_id INT NOT NULL,
+  is_installed TINYINT DEFAULT 0,
+  UNIQUE KEY uk_customer_item (customer_id, item_id),
+  FOREIGN KEY (customer_id) REFERENCES install_list_customers(id) ON DELETE CASCADE,
+  FOREIGN KEY (item_id) REFERENCES install_list_items(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS issues (

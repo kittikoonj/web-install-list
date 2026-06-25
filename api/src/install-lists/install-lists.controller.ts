@@ -71,15 +71,17 @@ export class InstallListsController {
     return this.installListsService.update(id, dto, user.name);
   }
 
-  @Patch(':id/items/:itemId/installed')
-  toggleItemInstalled(
+  @Patch(':id/customers/:customerId/items/:itemId/installed')
+  toggleCustomerItemInstalled(
     @Param('id', ParseIntPipe) id: number,
+    @Param('customerId', ParseIntPipe) customerId: number,
     @Param('itemId', ParseIntPipe) itemId: number,
     @Body() dto: ToggleItemInstalledDto,
     @CurrentUser() user: User,
   ) {
-    return this.installListsService.toggleItemInstalled(
+    return this.installListsService.toggleCustomerItemInstalled(
       id,
+      customerId,
       itemId,
       !!dto.isInstalled,
       user.name,

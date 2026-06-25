@@ -47,8 +47,13 @@ export interface InstallListItem {
   listId?: number;
   programId: number;
   method: InstallMethod;
-  isInstalled?: number | boolean;
   program?: Program;
+}
+
+export interface CustomerInstall {
+  customerId: number;
+  itemId: number;
+  isInstalled: boolean;
 }
 
 export interface InstallListCustomer {
@@ -71,6 +76,7 @@ export interface InstallList {
   deletedAt?: string;
   items?: InstallListItem[];
   customers?: InstallListCustomer[];
+  customerInstalls?: CustomerInstall[];
   issues?: Issue[];
   programCount?: number;
   customerCount?: number;
