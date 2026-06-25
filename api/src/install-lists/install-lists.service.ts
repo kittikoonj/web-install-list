@@ -183,7 +183,6 @@ export class InstallListsService {
       objectId: item.id,
       objectName: list?.name ?? `#${listId}`,
       performedBy,
-      detail: isInstalled ? 'marked installed' : 'marked not installed',
     });
 
     return item;

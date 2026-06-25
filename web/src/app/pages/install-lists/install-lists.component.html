@@ -118,7 +118,7 @@
                           </span>
                           <span class="program-name">{{ item.program?.name }}</span>
                           @if (item.program?.version) {
-                            <span class="version-badge">{{ item.program.version }}</span>
+                            <span class="version-badge">{{ item.program?.version }}</span>
                           }
                           <app-method-badge [method]="item.method" />
                         </label>

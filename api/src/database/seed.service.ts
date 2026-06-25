@@ -56,6 +56,8 @@ export class SeedService implements OnModuleInit {
     await this.seedRoles();
     await this.seedPermissions();
     await this.seedAdminUser();
+    await this.seedViewerUser();
+    await this.seedE2EUser();
   }
 
   private async seedRoles() {
@@ -115,6 +117,60 @@ export class SeedService implements OnModuleInit {
       this.userRepo.create({
         name: 'Super Admin',
         email: 'admin@example.com',
+        password: hash,
+        roleId: adminRole.id,
+        status: 'active',
+      }),
+    );
+  }
+
+  private async seedViewerUser() {
+    const existing = await this.userRepo.findOne({
+      where: { email: 'viewer@example.com' },
+    });
+    if (existing) return;
+
+    const viewerRole = await this.roleRepo.findOne({
+      where: { name: 'viewer' },
+    });
+    if (!viewerRole) return;
+
+    const hash = await bcrypt.hash('viewer123', 10);
+    await this.userRepo.save(
+      this.userRepo.create({
+        name: 'Viewer User',
+        email: 'viewer@example.com',
+        password: hash,
+        roleId: viewerRole.id,
+        status: 'active',
+      }),
+    );
+  }
+
+  private async seedE2EUser() {
+    const adminRole = await this.roleRepo.findOne({
+      where: { name: 'super_admin' },
+    });
+    if (!adminRole) return;
+
+    const hash = await bcrypt.hash('e2e123', 10);
+    const existing = await this.userRepo.findOne({
+      where: { email: 'e2e@example.com' },
+    });
+
+    if (existing) {
+      existing.password = hash;
+      existing.roleId = adminRole.id;
+      existing.status = 'active';
+      existing.isDelete = 0;
+      await this.userRepo.save(existing);
+      return;
+    }
+
+    await this.userRepo.save(
+      this.userRepo.create({
+        name: 'E2E Admin',
+        email: 'e2e@example.com',
         password: hash,
         roleId: adminRole.id,
         status: 'active',
