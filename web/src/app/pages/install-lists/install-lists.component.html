@@ -94,25 +94,34 @@
               @if (loadingDetail() === list.id) {
                 <div class="detail-loading">กำลังโหลด...</div>
               } @else {
-                @if (groupedPrograms(list.id).length) {
+                @if (getDetail(list.id).items.length) {
                   <div class="detail-section">
-                    <div class="detail-section-title">Programs</div>
-                    <div class="program-detail-list">
-                      @for (group of groupedPrograms(list.id); track group.program.id) {
-                        <div class="program-detail-item">
-                          <span class="program-icon" [style.background]="group.program.iconBg">
-                            <i class="ti" [class]="group.program.icon" [style.color]="group.program.iconFg"></i>
+                    <div class="detail-section-header">
+                      <div class="detail-section-title">Programs</div>
+                      @if (installProgress(list.id).total) {
+                        <span class="install-progress">
+                          ติดตั้งแล้ว {{ installProgress(list.id).done }}/{{ installProgress(list.id).total }}
+                        </span>
+                      }
+                    </div>
+                    <div class="checklist">
+                      @for (item of getDetail(list.id).items; track item.id) {
+                        <label class="checklist-item" (click)="$event.stopPropagation()">
+                          <input
+                            type="checkbox"
+                            [checked]="isItemInstalled(item)"
+                            [disabled]="!canWrite()"
+                            (change)="toggleInstalled(list.id, item, $event)"
+                          />
+                          <span class="program-icon" [style.background]="item.program?.iconBg">
+                            <i class="ti" [class]="item.program?.icon" [style.color]="item.program?.iconFg"></i>
                           </span>
-                          <span class="program-name">{{ group.program.name }}</span>
-                          @if (group.program.version) {
-                            <span class="version-badge">{{ group.program.version }}</span>
+                          <span class="program-name">{{ item.program?.name }}</span>
+                          @if (item.program?.version) {
+                            <span class="version-badge">{{ item.program.version }}</span>
                           }
-                          <div class="method-badges">
-                            @for (m of group.methods; track m) {
-                              <app-method-badge [method]="m" />
-                            }
-                          </div>
-                        </div>
+                          <app-method-badge [method]="item.method" />
+                        </label>
                       }
                     </div>
                   </div>

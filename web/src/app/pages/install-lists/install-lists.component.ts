@@ -317,6 +317,37 @@ export class InstallListsComponent implements OnInit {
     );
   }
 
+  installProgress(listId: number): { done: number; total: number } {
+    const items = this.getDetail(listId).items;
+    const total = items.length;
+    const done = items.filter((item) => !!item.isInstalled).length;
+    return { done, total };
+  }
+
+  isItemInstalled(item: InstallListItem): boolean {
+    return !!item.isInstalled;
+  }
+
+  toggleInstalled(listId: number, item: InstallListItem, event: Event) {
+    if (!item.id || !this.canWrite()) return;
+    const checked = (event.target as HTMLInputElement).checked;
+    this.api.toggleInstallListItemInstalled(listId, item.id, checked).subscribe({
+      next: (updated) => {
+        this.listDetails.update((m) => {
+          const detail = m.get(listId);
+          if (!detail) return m;
+          const items = detail.items.map((i) =>
+            i.id === item.id ? { ...i, isInstalled: updated.isInstalled } : i,
+          );
+          return new Map(m).set(listId, { ...detail, items });
+        });
+      },
+      error: () => {
+        (event.target as HTMLInputElement).checked = !checked;
+      },
+    });
+  }
+
   groupedPrograms(listId: number): GroupedProgram[] {
     const items = this.getDetail(listId).items;
     const map = new Map<number, GroupedProgram>();

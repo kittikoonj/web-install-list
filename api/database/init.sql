@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS install_list_items (
   list_id INT NOT NULL,
   program_id INT NOT NULL,
   method ENUM('offline','docker','online') NOT NULL,
+  is_installed TINYINT DEFAULT 0,
   FOREIGN KEY (list_id) REFERENCES install_lists(id) ON DELETE CASCADE,
   FOREIGN KEY (program_id) REFERENCES programs(id)
 );

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Program, InstallList, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats } from '../models';
+import { Program, InstallList, InstallListItem, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -92,6 +92,14 @@ export class ApiService {
       params: new HttpParams().set('format', format),
       responseType: 'blob',
     });
+  }
+
+  toggleInstallListItemInstalled(listId: number, itemId: number, isInstalled: boolean) {
+    return this.http.patch<InstallListItem>(
+      `${this.base}/install-lists/${listId}/items/${itemId}/installed`,
+      { isInstalled },
+      this.opts,
+    );
   }
 
   // Issues

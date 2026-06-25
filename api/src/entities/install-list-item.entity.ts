@@ -30,4 +30,7 @@ export class InstallListItem {
 
   @Column({ type: 'enum', enum: ['offline', 'docker', 'online'] })
   method: InstallMethod;
+
+  @Column({ name: 'is_installed', type: 'tinyint', default: 0 })
+  isInstalled: number;
 }

@@ -47,6 +47,7 @@ export interface InstallListItem {
   listId?: number;
   programId: number;
   method: InstallMethod;
+  isInstalled?: number | boolean;
   program?: Program;
 }
 

@@ -86,6 +86,11 @@ export class InstallListsService {
   }
 
   private async saveItems(listId: number, items: CreateInstallListDto['items']) {
+    const existing = await this.itemRepo.find({ where: { listId } });
+    const installedMap = new Map(
+      existing.map((item) => [`${item.programId}:${item.method}`, item.isInstalled]),
+    );
+
     await this.itemRepo.delete({ listId });
     if (items?.length) {
       const entities = items.map((item) =>
@@ -93,6 +98,7 @@ export class InstallListsService {
           listId,
           programId: item.programId,
           method: item.method,
+          isInstalled: installedMap.get(`${item.programId}:${item.method}`) ?? 0,
         }),
       );
       await this.itemRepo.save(entities);
@@ -158,6 +164,31 @@ export class InstallListsService {
     return this.findOne(id);
   }
 
+  async toggleItemInstalled(
+    listId: number,
+    itemId: number,
+    isInstalled: boolean,
+    performedBy: string,
+  ) {
+    const item = await this.itemRepo.findOne({ where: { id: itemId, listId } });
+    if (!item) throw new NotFoundException('ไม่พบรายการ program');
+
+    item.isInstalled = isInstalled ? 1 : 0;
+    await this.itemRepo.save(item);
+
+    const list = await this.listRepo.findOne({ where: { id: listId } });
+    await this.auditService.log({
+      action: 'update',
+      objectType: 'install_list_item',
+      objectId: item.id,
+      objectName: list?.name ?? `#${listId}`,
+      performedBy,
+      detail: isInstalled ? 'marked installed' : 'marked not installed',
+    });
+
+    return item;
+  }
+
   async clone(id: number, dto: CloneInstallListDto, performedBy: string) {
     const source = await this.findOne(id);
     const payload: CreateInstallListDto = {
@@ -192,10 +223,10 @@ export class InstallListsService {
       `# Exported: ${new Date().toISOString()}`,
       '',
       '## Programs',
-      'Program,Version,Method',
+      'Program,Version,Method,Installed',
       ...(list.items ?? []).map(
         (item) =>
-          `"${item.program?.name ?? item.programId}","${item.program?.version ?? ''}","${item.method}"`,
+          `"${item.program?.name ?? item.programId}","${item.program?.version ?? ''}","${item.method}","${item.isInstalled ? 'yes' : 'no'}"`,
       ),
       '',
       '## Customers',

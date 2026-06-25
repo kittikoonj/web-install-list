@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { InstallListsService } from './install-lists.service';
-import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto } from './dto/install-list.dto';
+import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto, ToggleItemInstalledDto } from './dto/install-list.dto';
 import { SessionGuard } from '../common/guards/session.guard';
 import { RequireMenu } from '../common/decorators/require-menu.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -68,6 +69,21 @@ export class InstallListsController {
     @CurrentUser() user: User,
   ) {
     return this.installListsService.update(id, dto, user.name);
+  }
+
+  @Patch(':id/items/:itemId/installed')
+  toggleItemInstalled(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Body() dto: ToggleItemInstalledDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.installListsService.toggleItemInstalled(
+      id,
+      itemId,
+      !!dto.isInstalled,
+      user.name,
+    );
   }
 
   @Delete(':id')

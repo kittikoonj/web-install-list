@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsNotEmpty,
@@ -73,4 +74,9 @@ export class CloneInstallListDto {
   @IsOptional()
   @IsString()
   name?: string;
+}
+
+export class ToggleItemInstalledDto {
+  @IsBoolean()
+  isInstalled: boolean;
 }
