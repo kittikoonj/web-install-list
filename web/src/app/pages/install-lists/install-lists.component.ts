@@ -363,6 +363,17 @@ export class InstallListsComponent implements OnInit {
     return this.auth.canAccess('issues');
   }
 
+  canWrite(): boolean {
+    return this.auth.canWrite();
+  }
+
+  createIssue(list: InstallList, event: MouseEvent) {
+    event.stopPropagation();
+    this.router.navigate(['/issues'], {
+      queryParams: { installListId: list.id, create: '1' },
+    });
+  }
+
   viewIssues(list: InstallList, issueId?: number) {
     this.router.navigate(['/issues'], {
       queryParams: {

@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MENU_KEY_META } from '../decorators/require-menu.decorator';
@@ -29,6 +30,18 @@ export class SessionGuard implements CanActivate {
     }
 
     request.user = user;
+
+    const method = request.method.toUpperCase();
+    const url: string = request.originalUrl ?? request.url;
+    const viewerWriteAllowed =
+      url.includes('/auth/logout') || url.includes('/auth/change-password');
+    if (
+      user.role.name === 'viewer' &&
+      !['GET', 'HEAD'].includes(method) &&
+      !viewerWriteAllowed
+    ) {
+      throw new ForbiddenException('บัญชี Viewer มีสิทธิ์ดูอย่างเดียว');
+    }
 
     const menuKey = this.reflector.getAllAndOverride<string>(MENU_KEY_META, [
       context.getHandler(),

@@ -1,8 +1,10 @@
 <div class="page-header">
   <h1>Install Lists</h1>
-  <button class="btn btn-primary" (click)="openCreate()">
-    <i class="ti ti-plus"></i> Create List
-  </button>
+  @if (canWrite()) {
+    <button class="btn btn-primary" (click)="openCreate()">
+      <i class="ti ti-plus"></i> Create List
+    </button>
+  }
 </div>
 
 <div class="search-bar">
@@ -58,6 +60,14 @@
           <td>{{ list.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
           <td>{{ list.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
           <td class="actions">
+            @if (canViewIssues() && canWrite()) {
+              <button
+                class="btn btn-sm btn-issues"
+                (click)="$event.stopPropagation(); createIssue(list, $event)"
+              >
+                <i class="ti ti-plus"></i> Issue
+              </button>
+            }
             @if (canViewIssues() && (list.issueCount ?? 0) > 0) {
               <button
                 class="btn btn-sm btn-issues"
@@ -66,11 +76,15 @@
                 <i class="ti ti-bug"></i> Issues
               </button>
             }
-            <button class="btn btn-sm" (click)="$event.stopPropagation(); openEdit(list)">Edit List</button>
+            @if (canWrite()) {
+              <button class="btn btn-sm" (click)="$event.stopPropagation(); openEdit(list)">Edit List</button>
+            }
             @if (!list.isDelete) {
               <button class="btn btn-sm" (click)="exportList(list, $event, 'csv')">Export</button>
-              <button class="btn btn-sm" (click)="cloneList(list, $event)">Clone</button>
-              <button class="btn btn-sm btn-danger" (click)="$event.stopPropagation(); deleteList(list)">Del List</button>
+              @if (canWrite()) {
+                <button class="btn btn-sm" (click)="cloneList(list, $event)">Clone</button>
+                <button class="btn btn-sm btn-danger" (click)="$event.stopPropagation(); deleteList(list)">Del List</button>
+              }
             }
           </td>
         </tr>
@@ -143,6 +157,15 @@
                     <div class="detail-section-header">
                       <div class="detail-section-title">Issues</div>
                       @if (canViewIssues()) {
+                        @if (canWrite()) {
+                          <button
+                            type="button"
+                            class="btn btn-sm"
+                            (click)="$event.stopPropagation(); createIssue(list, $event)"
+                          >
+                            <i class="ti ti-plus"></i> สร้าง Issue
+                          </button>
+                        }
                         <button
                           type="button"
                           class="btn btn-sm"

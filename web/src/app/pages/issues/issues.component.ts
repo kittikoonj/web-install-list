@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Issue, IssueAttachment, IssueComment, IssueStatus, InstallList } from '../../core/models';
 import { ISSUE_STATUS } from '../../core/constants';
 import {
@@ -18,6 +19,7 @@ import {
 })
 export class IssuesComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
 
   issues = signal<Issue[]>([]);
@@ -59,7 +61,14 @@ export class IssuesComponent implements OnInit, OnDestroy {
       const issueId = params.get('issueId');
       this.highlightIssueId = issueId ? +issueId : null;
       this.load();
+      if (params.get('create') === '1' && this.auth.canWrite()) {
+        this.openCreate();
+      }
     });
+  }
+
+  canWrite(): boolean {
+    return this.auth.canWrite();
   }
 
   loadInstallLists() {
@@ -84,6 +93,8 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.editing.set(null);
     this.pendingFiles.set([]);
     this.currentAttachments.set([]);
+    this.issueComments.set([]);
+    this.commentText = '';
     this.form = {
       installListId: this.filterListId
         ? +this.filterListId
@@ -99,6 +110,8 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.editing.set(issue);
     this.pendingFiles.set([]);
     this.currentAttachments.set(issue.attachments ?? []);
+    this.issueComments.set(issue.comments ?? []);
+    this.commentText = '';
     this.form = {
       installListId: issue.installListId,
       title: issue.title,
@@ -172,6 +185,18 @@ export class IssuesComponent implements OnInit, OnDestroy {
     obs.subscribe({
       next: (issue) => this.uploadPending(issue.id),
       error: () => this.saving.set(false),
+    });
+  }
+
+  addComment() {
+    const issue = this.editing();
+    if (!issue || !this.commentText.trim()) return;
+    this.api.addIssueComment(issue.id, this.commentText.trim()).subscribe({
+      next: (updated) => {
+        this.issueComments.set(updated.comments ?? []);
+        this.commentText = '';
+        this.load();
+      },
     });
   }
 

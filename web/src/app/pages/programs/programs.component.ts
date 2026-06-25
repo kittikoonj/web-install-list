@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Program, InstallMethod } from '../../core/models';
 import { MethodBadgeComponent } from '../../shared/method-badge/method-badge.component';
 import { IconPickerComponent } from '../../shared/icon-picker/icon-picker.component';
@@ -14,6 +15,7 @@ import { ICON_PALETTE } from '../../core/constants';
 })
 export class ProgramsComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   programs = signal<Program[]>([]);
   search = '';
@@ -110,6 +112,10 @@ export class ProgramsComponent implements OnInit {
   deleteProgram(program: Program) {
     if (!confirm(`ลบ program "${program.name}"?`)) return;
     this.api.deleteProgram(program.id).subscribe(() => this.load());
+  }
+
+  canWrite(): boolean {
+    return this.auth.canWrite();
   }
 
   truncateUrl(url: string): string {

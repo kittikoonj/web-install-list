@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { UserRecord, Role } from '../../core/models';
 import { RoleBadgeComponent } from '../../shared/role-badge/role-badge.component';
 import { MENU_ITEMS } from '../../core/constants';
@@ -13,6 +14,7 @@ import { MENU_ITEMS } from '../../core/constants';
 })
 export class UsersComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   users = signal<UserRecord[]>([]);
   roles = signal<Role[]>([]);
@@ -112,6 +114,10 @@ export class UsersComponent implements OnInit {
   deleteUser(user: UserRecord) {
     if (!confirm(`ลบ user "${user.name}"?`)) return;
     this.api.deleteUser(user.id).subscribe(() => this.load());
+  }
+
+  canWrite(): boolean {
+    return this.auth.canWrite();
   }
 
   initials(name: string): string {

@@ -1,8 +1,10 @@
 <div class="page-header">
   <h1>User Management</h1>
-  <button class="btn btn-primary" (click)="openCreate()">
-    <i class="ti ti-plus"></i> เพิ่ม User
-  </button>
+  @if (canWrite()) {
+    <button class="btn btn-primary" (click)="openCreate()">
+      <i class="ti ti-plus"></i> เพิ่ม User
+    </button>
+  }
 </div>
 
 <div class="search-bar">
@@ -44,8 +46,10 @@
             </span>
           </td>
           <td class="actions">
-            <button class="btn btn-sm" (click)="openEdit(u)">Edit</button>
-            <button class="btn btn-sm btn-danger" (click)="deleteUser(u)">Del</button>
+            @if (canWrite()) {
+              <button class="btn btn-sm" (click)="openEdit(u)">Edit</button>
+              <button class="btn btn-sm btn-danger" (click)="deleteUser(u)">Del</button>
+            }
           </td>
         </tr>
       } @empty {

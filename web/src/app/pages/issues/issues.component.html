@@ -1,8 +1,10 @@
 <div class="page-header">
   <h1>Issues</h1>
-  <button class="btn btn-primary" (click)="openCreate()">
-    <i class="ti ti-plus"></i> เพิ่ม Issue
-  </button>
+  @if (canWrite()) {
+    <button class="btn btn-primary" (click)="openCreate()">
+      <i class="ti ti-plus"></i> เพิ่ม Issue
+    </button>
+  }
 </div>
 
 <div class="search-bar">
@@ -84,9 +86,11 @@
           <td>{{ issue.createdBy || '—' }}</td>
           <td>{{ issue.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
           <td class="actions">
-            <button class="btn btn-sm" (click)="openEdit(issue)">Edit</button>
-            @if (!issue.isDelete) {
-              <button class="btn btn-sm btn-danger" (click)="deleteIssue(issue)">Del</button>
+            @if (canWrite()) {
+              <button class="btn btn-sm" (click)="openEdit(issue)">Edit</button>
+              @if (!issue.isDelete) {
+                <button class="btn btn-sm btn-danger" (click)="deleteIssue(issue)">Del</button>
+              }
             }
           </td>
         </tr>
@@ -184,6 +188,28 @@
             </div>
           }
         </div>
+
+        @if (editing()) {
+          <div class="form-group comments-section">
+            <label>Comments / Activity</label>
+            <div class="comments-list">
+              @for (c of issueComments(); track c.id) {
+                <div class="comment-item">
+                  <div class="comment-meta">{{ c.createdBy || '—' }} · {{ c.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                  <div class="comment-body">{{ c.body }}</div>
+                </div>
+              } @empty {
+                <p class="field-hint">ยังไม่มี comment</p>
+              }
+            </div>
+            <div class="comment-form">
+              <textarea [(ngModel)]="commentText" rows="2" placeholder="เพิ่ม comment..."></textarea>
+              <button type="button" class="btn btn-sm" (click)="addComment()" [disabled]="!commentText.trim()">
+                เพิ่ม Comment
+              </button>
+            </div>
+          </div>
+        }
       </div>
       <div class="modal-footer">
         <button class="btn" (click)="showModal.set(false)">ยกเลิก</button>

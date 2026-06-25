@@ -55,6 +55,10 @@ export class AuthService {
     return !!this.menus()[menuKey];
   }
 
+  canWrite(): boolean {
+    return this.currentUser()?.role?.name !== 'viewer';
+  }
+
   isLoggedIn(): boolean {
     return !!this.currentUser();
   }
