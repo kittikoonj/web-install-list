@@ -106,6 +106,15 @@ CREATE TABLE IF NOT EXISTS issue_attachments (
   FOREIGN KEY (issue_id) REFERENCES issues(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS issue_comments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  issue_id INT NOT NULL,
+  body TEXT NOT NULL,
+  created_by VARCHAR(100),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (issue_id) REFERENCES issues(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS audit_logs (
   id INT PRIMARY KEY AUTO_INCREMENT,
   action ENUM('create','update','delete') NOT NULL,

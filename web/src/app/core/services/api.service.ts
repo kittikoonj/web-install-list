@@ -87,11 +87,12 @@ export class ApiService {
   }
 
   // Issues
-  getIssues(search?: string, installListId?: number, includeDeleted = false) {
+  getIssues(search?: string, installListId?: number, includeDeleted = false, status?: string) {
     let params = new HttpParams();
     if (search) params = params.set('search', search);
     if (installListId) params = params.set('installListId', installListId);
     if (includeDeleted) params = params.set('includeDeleted', 'true');
+    if (status) params = params.set('status', status);
     return this.http.get<Issue[]>(`${this.base}/issues`, { ...this.opts, params });
   }
 
@@ -137,6 +138,10 @@ export class ApiService {
       `${this.base}/issues/${issueId}/attachments/${attachmentId}`,
       this.opts,
     );
+  }
+
+  addIssueComment(issueId: number, body: string) {
+    return this.http.post<Issue>(`${this.base}/issues/${issueId}/comments`, { body }, this.opts);
   }
 
   // Users

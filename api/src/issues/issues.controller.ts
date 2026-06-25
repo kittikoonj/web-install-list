@@ -16,6 +16,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { IssuesService } from './issues.service';
 import { CreateIssueDto, UpdateIssueDto } from './dto/issue.dto';
+import { CreateIssueCommentDto } from './dto/issue-comment.dto';
 import { SessionGuard } from '../common/guards/session.guard';
 import { RequireMenu } from '../common/decorators/require-menu.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -32,12 +33,14 @@ export class IssuesController {
     @Query('search') search?: string,
     @Query('installListId') installListId?: string,
     @Query('includeDeleted') includeDeleted?: string,
+    @Query('status') status?: string,
   ) {
     const listId = installListId ? parseInt(installListId, 10) : undefined;
     return this.issuesService.findAll(
       search,
       listId,
       includeDeleted === 'true',
+      status,
     );
   }
 
@@ -63,6 +66,15 @@ export class IssuesController {
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     return this.issuesService.uploadAttachments(id, files);
+  }
+
+  @Post(':id/comments')
+  addComment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateIssueCommentDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.issuesService.addComment(id, dto, user.name);
   }
 
   @Put(':id')

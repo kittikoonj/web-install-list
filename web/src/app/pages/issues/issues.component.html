@@ -18,6 +18,12 @@
       <option [value]="list.id">{{ list.name }}</option>
     }
   </select>
+  <select [(ngModel)]="filterStatus" (change)="load()">
+    <option value="">ทุก Status</option>
+    @for (s of statusOptions; track s) {
+      <option [value]="s">{{ statusLabel(s) }}</option>
+    }
+  </select>
   <button class="btn" (click)="load()">ค้นหา</button>
 </div>
 

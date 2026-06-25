@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-import { Issue, IssueAttachment, IssueStatus, InstallList } from '../../core/models';
+import { Issue, IssueAttachment, IssueComment, IssueStatus, InstallList } from '../../core/models';
 import { ISSUE_STATUS } from '../../core/constants';
 import {
   ImageViewerComponent,
@@ -24,7 +24,10 @@ export class IssuesComponent implements OnInit, OnDestroy {
   installLists = signal<InstallList[]>([]);
   search = '';
   filterListId = '';
+  filterStatus = '';
   highlightIssueId: number | null = null;
+  commentText = '';
+  issueComments = signal<IssueComment[]>([]);
   showModal = signal(false);
   editing = signal<Issue | null>(null);
   saving = signal(false);
@@ -68,7 +71,12 @@ export class IssuesComponent implements OnInit, OnDestroy {
   load() {
     const listId = this.filterListId ? +this.filterListId : undefined;
     this.api
-      .getIssues(this.search.trim() || undefined, listId, true)
+      .getIssues(
+        this.search.trim() || undefined,
+        listId,
+        true,
+        this.filterStatus || undefined,
+      )
       .subscribe((data) => this.issues.set(data));
   }
 

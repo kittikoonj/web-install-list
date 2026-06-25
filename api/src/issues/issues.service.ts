@@ -7,8 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { Issue } from '../entities/issue.entity';
 import { IssueAttachment } from '../entities/issue-attachment.entity';
+import { IssueComment } from '../entities/issue-comment.entity';
 import { InstallList } from '../entities/install-list.entity';
 import { CreateIssueDto, UpdateIssueDto } from './dto/issue.dto';
+import { CreateIssueCommentDto } from './dto/issue-comment.dto';
 import { AuditService } from '../common/audit.service';
 import {
   removeStoredFile,
@@ -23,6 +25,8 @@ export class IssuesService {
     private readonly issueRepo: Repository<Issue>,
     @InjectRepository(IssueAttachment)
     private readonly attachmentRepo: Repository<IssueAttachment>,
+    @InjectRepository(IssueComment)
+    private readonly commentRepo: Repository<IssueComment>,
     @InjectRepository(InstallList)
     private readonly listRepo: Repository<InstallList>,
     private readonly auditService: AuditService,
@@ -40,10 +44,16 @@ export class IssuesService {
     return list;
   }
 
-  async findAll(search?: string, installListId?: number, includeDeleted = false) {
+  async findAll(
+    search?: string,
+    installListId?: number,
+    includeDeleted = false,
+    status?: string,
+  ) {
     const where: Record<string, unknown> = {};
     if (!includeDeleted) where.isDelete = 0;
     if (installListId) where.installListId = installListId;
+    if (status) where.status = status;
 
     let issues: Issue[];
 
@@ -54,13 +64,13 @@ export class IssuesService {
           { ...where, title: Like(term) },
           { ...where, description: Like(term) },
         ],
-        relations: { installList: true, attachments: true },
+        relations: { installList: true, attachments: true, comments: true },
         order: { updatedAt: 'DESC' },
       });
     } else {
       issues = await this.issueRepo.find({
         where,
-        relations: { installList: true, attachments: true },
+        relations: { installList: true, attachments: true, comments: true },
         order: { updatedAt: 'DESC' },
       });
     }
@@ -80,7 +90,7 @@ export class IssuesService {
   async findOne(id: number) {
     const issue = await this.issueRepo.findOne({
       where: { id },
-      relations: { installList: true, attachments: true },
+      relations: { installList: true, attachments: true, comments: true },
     });
     if (!issue) throw new NotFoundException('ไม่พบ issue');
     return this.mapIssue(issue);
@@ -154,6 +164,18 @@ export class IssuesService {
 
     await removeStoredFile(issueId, attachment.storedName);
     await this.attachmentRepo.delete(attachmentId);
+    return this.findOne(issueId);
+  }
+
+  async addComment(issueId: number, dto: CreateIssueCommentDto, performedBy: string) {
+    await this.findOne(issueId);
+    await this.commentRepo.save(
+      this.commentRepo.create({
+        issueId,
+        body: dto.body.trim(),
+        createdBy: performedBy,
+      }),
+    );
     return this.findOne(issueId);
   }
 

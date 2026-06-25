@@ -104,6 +104,15 @@ export interface Issue {
   deletedBy?: string;
   deletedAt?: string;
   attachments?: IssueAttachment[];
+  comments?: IssueComment[];
+}
+
+export interface IssueComment {
+  id: number;
+  issueId: number;
+  body: string;
+  createdBy?: string;
+  createdAt: string;
 }
 
 export interface DashboardStats {

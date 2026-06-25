@@ -22,6 +22,7 @@ import { InstallListItem } from './entities/install-list-item.entity';
 import { InstallListCustomer } from './entities/install-list-customer.entity';
 import { Issue } from './entities/issue.entity';
 import { IssueAttachment } from './entities/issue-attachment.entity';
+import { IssueComment } from './entities/issue-comment.entity';
 import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
@@ -46,6 +47,7 @@ import { AuditLog } from './entities/audit-log.entity';
           InstallListCustomer,
           Issue,
           IssueAttachment,
+          IssueComment,
           AuditLog,
         ],
         synchronize: true,

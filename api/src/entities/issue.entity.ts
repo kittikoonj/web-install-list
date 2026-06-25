@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { InstallList } from './install-list.entity';
 import { IssueAttachment } from './issue-attachment.entity';
+import { IssueComment } from './issue-comment.entity';
 
 export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
@@ -61,4 +62,7 @@ export class Issue {
 
   @OneToMany(() => IssueAttachment, (attachment) => attachment.issue)
   attachments: IssueAttachment[];
+
+  @OneToMany(() => IssueComment, (comment) => comment.issue)
+  comments: IssueComment[];
 }
