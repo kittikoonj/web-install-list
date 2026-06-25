@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets } from 'typeorm';
+import type { Response } from 'express';
 import { InstallList } from '../entities/install-list.entity';
 import { InstallListItem } from '../entities/install-list-item.entity';
 import { InstallListCustomer } from '../entities/install-list-customer.entity';
@@ -173,6 +174,47 @@ export class InstallListsService {
       })),
     };
     return this.create(payload, performedBy);
+  }
+
+  async exportList(id: number, format: 'csv' | 'json', res: Response) {
+    const list = await this.findOne(id);
+    const safeName = list.name.replace(/[^\w.-]+/g, '_');
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}.json"`);
+      res.send(JSON.stringify(list, null, 2));
+      return;
+    }
+
+    const lines = [
+      `# Install List: ${list.name}`,
+      `# Exported: ${new Date().toISOString()}`,
+      '',
+      '## Programs',
+      'Program,Version,Method',
+      ...(list.items ?? []).map(
+        (item) =>
+          `"${item.program?.name ?? item.programId}","${item.program?.version ?? ''}","${item.method}"`,
+      ),
+      '',
+      '## Customers',
+      'Customer,Installer,Installed At,Test Case URL',
+      ...(list.customers ?? []).map(
+        (c) =>
+          `"${c.customerName}","${c.installerName ?? ''}","${c.installedAt}","${c.testCaseUrl ?? ''}"`,
+      ),
+      '',
+      '## Issues',
+      'Title,Status,Description',
+      ...(list.issues ?? []).map(
+        (i) => `"${i.title}","${i.status}","${(i.description ?? '').replace(/"/g, '""')}"`,
+      ),
+    ];
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}.csv"`);
+    res.send('\uFEFF' + lines.join('\n'));
   }
 
   async softDelete(id: number, performedBy: string) {

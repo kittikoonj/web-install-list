@@ -68,6 +68,7 @@
             }
             <button class="btn btn-sm" (click)="$event.stopPropagation(); openEdit(list)">Edit List</button>
             @if (!list.isDelete) {
+              <button class="btn btn-sm" (click)="exportList(list, $event, 'csv')">Export</button>
               <button class="btn btn-sm" (click)="cloneList(list, $event)">Clone</button>
               <button class="btn btn-sm btn-danger" (click)="$event.stopPropagation(); deleteList(list)">Del List</button>
             }

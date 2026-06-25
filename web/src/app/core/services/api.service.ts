@@ -86,6 +86,14 @@ export class ApiService {
     );
   }
 
+  exportInstallList(id: number, format: 'csv' | 'json' = 'csv') {
+    return this.http.get(`${this.base}/install-lists/${id}/export`, {
+      ...this.opts,
+      params: new HttpParams().set('format', format),
+      responseType: 'blob',
+    });
+  }
+
   // Issues
   getIssues(search?: string, installListId?: number, includeDeleted = false, status?: string) {
     let params = new HttpParams();

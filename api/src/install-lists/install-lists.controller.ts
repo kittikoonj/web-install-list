@@ -9,7 +9,9 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { InstallListsService } from './install-lists.service';
 import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto } from './dto/install-list.dto';
 import { SessionGuard } from '../common/guards/session.guard';
@@ -29,6 +31,15 @@ export class InstallListsController {
     @Query('search') search?: string,
   ) {
     return this.installListsService.findAll(activeOnly !== 'false', search);
+  }
+
+  @Get(':id/export')
+  exportList(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('format') format: 'csv' | 'json' = 'csv',
+    @Res() res: Response,
+  ) {
+    return this.installListsService.exportList(id, format, res);
   }
 
   @Get(':id')

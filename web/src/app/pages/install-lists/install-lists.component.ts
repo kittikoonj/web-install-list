@@ -271,6 +271,18 @@ export class InstallListsComponent implements OnInit {
     this.api.cloneInstallList(list.id, name.trim()).subscribe(() => this.load());
   }
 
+  exportList(list: InstallList, event: MouseEvent, format: 'csv' | 'json' = 'csv') {
+    event.stopPropagation();
+    this.api.exportInstallList(list.id, format).subscribe((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${list.name.replace(/[^\w.-]+/g, '_')}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
   toggleExpand(list: InstallList) {
     if (this.expandedId() === list.id) {
       this.expandedId.set(null);
