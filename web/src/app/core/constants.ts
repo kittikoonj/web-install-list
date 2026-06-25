@@ -34,6 +34,7 @@ export const ISSUE_STATUS: Record<
 };
 
 export const MENU_ITEMS = [
+  { key: 'dashboard', label: 'Dashboard', section: 'หลัก', route: '/dashboard', icon: 'ti-dashboard' },
   { key: 'install_lists', label: 'Install Lists', section: 'หลัก', route: '/install-lists', icon: 'ti-list-check' },
   { key: 'issues', label: 'Issues', section: 'หลัก', route: '/issues', icon: 'ti-bug' },
   { key: 'programs', label: 'Programs', section: 'หลัก', route: '/programs', icon: 'ti-apps' },

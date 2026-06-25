@@ -1,4 +1,5 @@
 export const MENU_KEYS = [
+  'dashboard',
   'install_lists',
   'issues',
   'programs',
@@ -11,6 +12,7 @@ export const MENU_KEYS = [
 export type MenuKey = (typeof MENU_KEYS)[number];
 
 export const MENU_LABELS: Record<MenuKey, string> = {
+  dashboard: 'Dashboard',
   install_lists: 'Install Lists',
   issues: 'Issues',
   programs: 'Programs',

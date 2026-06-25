@@ -124,6 +124,7 @@ INSERT INTO roles (id, name, label) VALUES
 ON DUPLICATE KEY UPDATE label = VALUES(label);
 
 INSERT INTO role_permissions (role_id, menu_key, can_access) VALUES
+  (1, 'dashboard', 1),
   (1, 'install_lists', 1),
   (1, 'issues', 1),
   (1, 'programs', 1),
@@ -131,6 +132,7 @@ INSERT INTO role_permissions (role_id, menu_key, can_access) VALUES
   (1, 'roles', 1),
   (1, 'audit_log', 1),
   (1, 'settings', 1),
+  (2, 'dashboard', 1),
   (2, 'install_lists', 1),
   (2, 'issues', 1),
   (2, 'programs', 1),
@@ -138,6 +140,7 @@ INSERT INTO role_permissions (role_id, menu_key, can_access) VALUES
   (2, 'roles', 0),
   (2, 'audit_log', 1),
   (2, 'settings', 0),
+  (3, 'dashboard', 1),
   (3, 'install_lists', 1),
   (3, 'issues', 1),
   (3, 'programs', 0),
@@ -145,6 +148,7 @@ INSERT INTO role_permissions (role_id, menu_key, can_access) VALUES
   (3, 'roles', 0),
   (3, 'audit_log', 0),
   (3, 'settings', 0),
+  (4, 'dashboard', 1),
   (4, 'install_lists', 1),
   (4, 'issues', 1),
   (4, 'programs', 0),

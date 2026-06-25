@@ -11,6 +11,8 @@ import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 import { SettingsModule } from './settings/settings.module';
 import { IssuesModule } from './issues/issues.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { HealthModule } from './health/health.module';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
 import { RolePermission } from './entities/role-permission.entity';
@@ -57,6 +59,8 @@ import { AuditLog } from './entities/audit-log.entity';
     ProgramsModule,
     InstallListsModule,
     IssuesModule,
+    DashboardModule,
+    HealthModule,
     RolesModule,
     AuditLogsModule,
     SettingsModule,

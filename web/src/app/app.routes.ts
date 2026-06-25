@@ -16,7 +16,13 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'install-lists', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+        canActivate: [menuGuard('dashboard')],
+      },
       {
         path: 'install-lists',
         loadComponent: () =>
@@ -69,5 +75,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: 'install-lists' },
+  { path: '**', redirectTo: 'dashboard' },
 ];

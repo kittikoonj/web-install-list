@@ -1,0 +1,65 @@
+<div class="page-header">
+  <h1>Dashboard</h1>
+</div>
+
+@if (stats(); as s) {
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Install Lists</div>
+      <div class="stat-value">{{ s.activeLists }} <span class="stat-sub">/ {{ s.totalLists }}</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Programs</div>
+      <div class="stat-value">{{ s.totalPrograms }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Issues</div>
+      <div class="stat-value">{{ s.openIssues }} <span class="stat-sub">open / {{ s.totalIssues }}</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Users</div>
+      <div class="stat-value">{{ s.totalUsers }}</div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <div class="card panel">
+      <div class="panel-header">
+        <h2>Install Lists ล่าสุด</h2>
+        <a routerLink="/install-lists" class="link">ดูทั้งหมด</a>
+      </div>
+      <ul class="list">
+        @for (list of s.recentLists; track list.id) {
+          <li>
+            <span>{{ list.name }}</span>
+            <span class="muted">{{ list.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </li>
+        } @empty {
+          <li class="empty">ไม่มีข้อมูล</li>
+        }
+      </ul>
+    </div>
+
+    <div class="card panel">
+      <div class="panel-header">
+        <h2>Issues ล่าสุด</h2>
+        <a routerLink="/issues" class="link">ดูทั้งหมด</a>
+      </div>
+      <ul class="list">
+        @for (issue of s.recentIssues; track issue.id) {
+          <li>
+            <div class="issue-row">
+              <span>{{ issue.title }}</span>
+              <span class="status-badge" [style]="statusStyle(issue.status)">{{ statusLabel(issue.status) }}</span>
+            </div>
+            <span class="muted">{{ issue.installListName || '—' }} · {{ issue.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </li>
+        } @empty {
+          <li class="empty">ไม่มีข้อมูล</li>
+        }
+      </ul>
+    </div>
+  </div>
+} @else {
+  <div class="loading">กำลังโหลด...</div>
+}

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Program, InstallList, UserRecord, AuditLog, PermissionMatrix, Role, Issue } from '../models';
+import { Program, InstallList, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -10,6 +10,15 @@ export class ApiService {
   constructor(private readonly http: HttpClient) {}
 
   private opts = { withCredentials: true as const };
+
+  // Dashboard
+  getDashboardStats() {
+    return this.http.get<DashboardStats>(`${this.base}/dashboard/stats`, this.opts);
+  }
+
+  getHealth() {
+    return this.http.get<{ status: string; db: string; uptime: number }>(`${this.base}/health`);
+  }
 
   // Programs
   getPrograms(search?: string, includeDeleted = false) {

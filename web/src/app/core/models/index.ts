@@ -106,6 +106,23 @@ export interface Issue {
   attachments?: IssueAttachment[];
 }
 
+export interface DashboardStats {
+  totalLists: number;
+  activeLists: number;
+  totalPrograms: number;
+  totalIssues: number;
+  openIssues: number;
+  totalUsers: number;
+  recentLists: { id: number; name: string; updatedAt: string }[];
+  recentIssues: {
+    id: number;
+    title: string;
+    status: string;
+    installListName?: string;
+    updatedAt: string;
+  }[];
+}
+
 export interface AuditLog {
   id: number;
   action: 'create' | 'update' | 'delete';

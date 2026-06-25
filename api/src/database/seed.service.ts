@@ -10,6 +10,7 @@ import { MENU_KEYS } from '../common/constants';
 const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
   super_admin: Object.fromEntries(MENU_KEYS.map((k) => [k, true])),
   manager: {
+    dashboard: true,
     install_lists: true,
     issues: true,
     programs: true,
@@ -19,6 +20,7 @@ const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
     settings: false,
   },
   user: {
+    dashboard: true,
     install_lists: true,
     issues: true,
     programs: false,
@@ -28,6 +30,7 @@ const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
     settings: false,
   },
   viewer: {
+    dashboard: true,
     install_lists: true,
     issues: true,
     programs: false,
