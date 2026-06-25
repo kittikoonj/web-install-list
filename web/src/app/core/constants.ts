@@ -23,8 +23,19 @@ export const ROLE_BADGE: Record<string, { bg: string; fg: string }> = {
   viewer: { bg: '#F1EFE8', fg: '#444441' },
 };
 
+export const ISSUE_STATUS: Record<
+  string,
+  { bg: string; fg: string; label: string }
+> = {
+  open: { bg: '#FCEBEB', fg: '#A32D2D', label: 'open' },
+  in_progress: { bg: '#FAEEDA', fg: '#633806', label: 'in progress' },
+  resolved: { bg: '#EAF3DE', fg: '#27500A', label: 'resolved' },
+  closed: { bg: '#F1EFE8', fg: '#444441', label: 'closed' },
+};
+
 export const MENU_ITEMS = [
   { key: 'install_lists', label: 'Install Lists', section: 'หลัก', route: '/install-lists', icon: 'ti-list-check' },
+  { key: 'issues', label: 'Issues', section: 'หลัก', route: '/issues', icon: 'ti-bug' },
   { key: 'programs', label: 'Programs', section: 'หลัก', route: '/programs', icon: 'ti-apps' },
   { key: 'users', label: 'Users', section: 'จัดการ', route: '/users', icon: 'ti-users' },
   { key: 'roles', label: 'Roles', section: 'จัดการ', route: '/roles', icon: 'ti-shield' },
@@ -61,7 +72,7 @@ export const ICON_CATEGORIES: Record<string, string[]> = {
 
 export const ROLE_DESCRIPTIONS = [
   { role: 'Super Admin', desc: 'เข้าถึงทุกเมนู จัดการ users, roles, settings' },
-  { role: 'Manager', desc: 'Install Lists, Programs, Audit Log' },
-  { role: 'User', desc: 'Install Lists เท่านั้น' },
-  { role: 'Viewer', desc: 'ดู Install Lists อย่างเดียว' },
+  { role: 'Manager', desc: 'Install Lists, Issues, Programs, Audit Log' },
+  { role: 'User', desc: 'Install Lists, Issues' },
+  { role: 'Viewer', desc: 'ดู Install Lists, Issues' },
 ];

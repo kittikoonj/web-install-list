@@ -6,6 +6,7 @@ import { InstallListItem } from '../entities/install-list-item.entity';
 import { InstallListCustomer } from '../entities/install-list-customer.entity';
 import { CreateInstallListDto, UpdateInstallListDto } from './dto/install-list.dto';
 import { AuditService } from '../common/audit.service';
+import { attachmentPublicPath } from '../issues/issue-upload.util';
 
 @Injectable()
 export class InstallListsService {
@@ -25,6 +26,9 @@ export class InstallListsService {
       .leftJoinAndSelect('list.items', 'items')
       .leftJoinAndSelect('items.program', 'program')
       .leftJoinAndSelect('list.customers', 'customers')
+      .leftJoinAndSelect('list.issues', 'issues', 'issues.isDelete = :issueNotDeleted', {
+        issueNotDeleted: 0,
+      })
       .orderBy('list.updatedAt', 'DESC');
 
     if (activeOnly) {
@@ -43,7 +47,9 @@ export class InstallListsService {
             .orWhere('customers.installerName LIKE :term', { term })
             .orWhere('customers.testCaseUrl LIKE :term', { term })
             .orWhere('program.name LIKE :term', { term })
-            .orWhere('program.version LIKE :term', { term });
+            .orWhere('program.version LIKE :term', { term })
+            .orWhere('issues.title LIKE :term', { term })
+            .orWhere('issues.description LIKE :term', { term });
         }),
       );
     }
@@ -54,15 +60,27 @@ export class InstallListsService {
       ...list,
       programCount: list.items?.length ?? 0,
       customerCount: list.customers?.length ?? 0,
+      issueCount: list.issues?.length ?? 0,
+      issues: undefined,
     }));
   }
 
   async findOne(id: number) {
     const list = await this.listRepo.findOne({
       where: { id },
-      relations: { items: { program: true }, customers: true },
+      relations: { items: { program: true }, customers: true, issues: { attachments: true } },
     });
     if (!list) throw new NotFoundException('ไม่พบ install list');
+    list.issues = (list.issues ?? [])
+      .filter((issue) => !issue.isDelete)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .map((issue) => ({
+        ...issue,
+        attachments: (issue.attachments ?? []).map((att) => ({
+          ...att,
+          url: attachmentPublicPath(att.issueId, att.storedName),
+        })),
+      }));
     return list;
   }
 

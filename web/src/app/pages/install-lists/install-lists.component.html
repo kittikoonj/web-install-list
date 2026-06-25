@@ -26,6 +26,7 @@
         <th>ชื่อ List</th>
         <th>Programs</th>
         <th>ลูกค้า</th>
+        <th>Issues</th>
         <th>ผู้สร้าง</th>
         <th>วันที่สร้าง</th>
         <th>แก้ไขล่าสุด</th>
@@ -52,10 +53,19 @@
           </td>
           <td>{{ list.programCount ?? list.items?.length ?? 0 }}</td>
           <td>{{ list.customerCount ?? list.customers?.length ?? 0 }}</td>
+          <td>{{ list.issueCount ?? 0 }}</td>
           <td>{{ list.createdBy }}</td>
           <td>{{ list.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
           <td>{{ list.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
           <td class="actions">
+            @if (canViewIssues() && (list.issueCount ?? 0) > 0) {
+              <button
+                class="btn btn-sm btn-issues"
+                (click)="$event.stopPropagation(); viewIssues(list)"
+              >
+                <i class="ti ti-bug"></i> Issues
+              </button>
+            }
             <button class="btn btn-sm" (click)="$event.stopPropagation(); openEdit(list)">Edit List</button>
             @if (!list.isDelete) {
               <button class="btn btn-sm btn-danger" (click)="$event.stopPropagation(); deleteList(list)">Del List</button>
@@ -64,7 +74,7 @@
         </tr>
         @if (isExpanded(list.id)) {
           <tr class="detail-row">
-            <td colspan="7">
+            <td colspan="8">
               @if (loadingDetail() === list.id) {
                 <div class="detail-loading">กำลังโหลด...</div>
               } @else {
@@ -126,7 +136,117 @@
                   </div>
                 }
 
-                @if (!groupedPrograms(list.id).length && !sortedCustomers(list.id).length) {
+                @if (sortedIssues(list.id).length) {
+                  <div class="detail-section">
+                    <div class="detail-section-header">
+                      <div class="detail-section-title">Issues</div>
+                      @if (canViewIssues()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          (click)="$event.stopPropagation(); viewIssues(list)"
+                        >
+                          ดูทั้งหมด
+                        </button>
+                      }
+                    </div>
+                    <table class="issue-table">
+                      <thead>
+                        <tr>
+                          <th>หัวข้อ</th>
+                          <th>Status</th>
+                          <th>ไฟล์แนบ</th>
+                          <th>ผู้สร้าง</th>
+                          <th>อัปเดตล่าสุด</th>
+                          @if (canViewIssues()) {
+                            <th></th>
+                          }
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (issue of sortedIssues(list.id); track issue.id) {
+                          <tr>
+                            <td>
+                              <div class="issue-title">{{ issue.title }}</div>
+                              @if (issue.description) {
+                                <div class="issue-desc">{{ issue.description }}</div>
+                              }
+                            </td>
+                            <td>
+                              <span class="status-badge" [style]="issueStatusStyle(issue.status)">
+                                {{ issueStatusLabel(issue.status) }}
+                              </span>
+                            </td>
+                            <td>
+                              @if (issue.attachments?.length) {
+                                <div class="attachment-preview">
+                                  @for (img of issueImages(issue); track img.id) {
+                                    <a
+                                      [href]="img.url"
+                                      target="_blank"
+                                      rel="noopener"
+                                      class="thumb-link"
+                                      (click)="$event.stopPropagation()"
+                                    >
+                                      <img [src]="img.url" [alt]="img.originalName" class="thumb" />
+                                    </a>
+                                  }
+                                  @for (file of issueFiles(issue); track file.id) {
+                                    <a
+                                      [href]="file.url"
+                                      target="_blank"
+                                      rel="noopener"
+                                      class="file-link"
+                                      (click)="$event.stopPropagation()"
+                                    >
+                                      <i class="ti ti-file-zip"></i> {{ file.originalName }}.zip
+                                    </a>
+                                  }
+                                </div>
+                              } @else {
+                                <span class="text-muted">—</span>
+                              }
+                            </td>
+                            <td>{{ issue.createdBy || '—' }}</td>
+                            <td>{{ issue.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                            @if (canViewIssues()) {
+                              <td>
+                                <button
+                                  type="button"
+                                  class="btn btn-sm"
+                                  (click)="$event.stopPropagation(); viewIssues(list, issue.id)"
+                                >
+                                  ดู
+                                </button>
+                              </td>
+                            }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                } @else if (canViewIssues()) {
+                  <div class="detail-section">
+                    <div class="detail-section-header">
+                      <div class="detail-section-title">Issues</div>
+                      <button
+                        type="button"
+                        class="btn btn-sm"
+                        (click)="$event.stopPropagation(); viewIssues(list)"
+                      >
+                        ดู Issues
+                      </button>
+                    </div>
+                    <div class="detail-empty-inline">ยังไม่มี issue</div>
+                  </div>
+                }
+
+                @if (
+                  !groupedPrograms(list.id).length &&
+                  !sortedCustomers(list.id).length &&
+                  !sortedIssues(list.id).length &&
+                  !canViewIssues()
+                ) {
                   <div class="detail-empty">ไม่มีข้อมูลใน list นี้</div>
                 }
               }
@@ -134,7 +254,7 @@
           </tr>
         }
       } @empty {
-        <tr><td colspan="7" class="empty-state">ไม่มี install list</td></tr>
+        <tr><td colspan="8" class="empty-state">ไม่มี install list</td></tr>
       }
     </tbody>
   </table>

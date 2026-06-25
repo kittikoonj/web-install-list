@@ -2,4 +2,5 @@ node_modules/
 dist/
 .env
 api/.env
+uploads/
 .DS_Store

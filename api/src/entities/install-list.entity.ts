@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { InstallListItem } from './install-list-item.entity';
 import { InstallListCustomer } from './install-list-customer.entity';
+import { Issue } from './issue.entity';
 
 @Entity('install_lists')
 export class InstallList {
@@ -40,4 +41,7 @@ export class InstallList {
     cascade: true,
   })
   customers: InstallListCustomer[];
+
+  @OneToMany(() => Issue, (issue) => issue.installList)
+  issues: Issue[];
 }

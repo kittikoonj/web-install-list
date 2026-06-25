@@ -1,15 +1,20 @@
 import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import {
   InstallList,
   Program,
   InstallMethod,
   InstallListItem,
   InstallListCustomer,
+  Issue,
+  IssueStatus,
 } from '../../core/models';
 import { MethodBadgeComponent } from '../../shared/method-badge/method-badge.component';
+import { ISSUE_STATUS } from '../../core/constants';
 
 interface GroupedProgram {
   program: Program;
@@ -32,6 +37,7 @@ interface InstallerOption {
 interface ListDetail {
   items: InstallListItem[];
   customers: InstallListCustomer[];
+  issues: Issue[];
 }
 
 @Component({
@@ -42,6 +48,8 @@ interface ListDetail {
 })
 export class InstallListsComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   lists = signal<InstallList[]>([]);
   programs = signal<Program[]>([]);
@@ -58,6 +66,7 @@ export class InstallListsComponent implements OnInit {
   expandedId = signal<number | null>(null);
   loadingDetail = signal<number | null>(null);
   listDetails = signal<Map<number, ListDetail>>(new Map());
+  readonly issueStatusMeta = ISSUE_STATUS;
   openInstallerPicker = signal<number | null>(null);
   installerFilter = signal('');
 
@@ -235,6 +244,7 @@ export class InstallListsComponent implements OnInit {
               new Map(m).set(expanded, {
                 items: full.items ?? [],
                 customers: full.customers ?? [],
+                issues: full.issues ?? [],
               }),
             );
           });
@@ -264,6 +274,7 @@ export class InstallListsComponent implements OnInit {
           new Map(m).set(list.id, {
             items: full.items ?? [],
             customers: full.customers ?? [],
+            issues: full.issues ?? [],
           }),
         );
         this.loadingDetail.set(null);
@@ -277,7 +288,9 @@ export class InstallListsComponent implements OnInit {
   }
 
   getDetail(listId: number): ListDetail {
-    return this.listDetails().get(listId) ?? { items: [], customers: [] };
+    return (
+      this.listDetails().get(listId) ?? { items: [], customers: [], issues: [] }
+    );
   }
 
   groupedPrograms(listId: number): GroupedProgram[] {
@@ -305,5 +318,41 @@ export class InstallListsComponent implements OnInit {
     return [...this.getDetail(listId).customers].sort(
       (a, b) => new Date(b.installedAt).getTime() - new Date(a.installedAt).getTime(),
     );
+  }
+
+  sortedIssues(listId: number): Issue[] {
+    return [...this.getDetail(listId).issues].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
+  }
+
+  issueStatusLabel(status: IssueStatus): string {
+    return this.issueStatusMeta[status]?.label ?? status;
+  }
+
+  issueStatusStyle(status: IssueStatus) {
+    const meta = this.issueStatusMeta[status];
+    return meta ? { background: meta.bg, color: meta.fg } : {};
+  }
+
+  canViewIssues(): boolean {
+    return this.auth.canAccess('issues');
+  }
+
+  viewIssues(list: InstallList, issueId?: number) {
+    this.router.navigate(['/issues'], {
+      queryParams: {
+        installListId: list.id,
+        ...(issueId ? { issueId } : {}),
+      },
+    });
+  }
+
+  issueImages(issue: Issue) {
+    return (issue.attachments ?? []).filter((a) => a.fileType === 'image');
+  }
+
+  issueFiles(issue: Issue) {
+    return (issue.attachments ?? []).filter((a) => a.fileType === 'file');
   }
 }

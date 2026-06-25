@@ -79,6 +79,33 @@ CREATE TABLE IF NOT EXISTS install_list_customers (
   FOREIGN KEY (list_id) REFERENCES install_lists(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS issues (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  install_list_id INT NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  status ENUM('open','in_progress','resolved','closed') DEFAULT 'open',
+  created_by VARCHAR(100),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_delete TINYINT DEFAULT 0,
+  deleted_by VARCHAR(100),
+  deleted_at DATETIME,
+  FOREIGN KEY (install_list_id) REFERENCES install_lists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS issue_attachments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  issue_id INT NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  stored_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  file_type ENUM('image','file') NOT NULL,
+  file_size INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (issue_id) REFERENCES issues(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS audit_logs (
   id INT PRIMARY KEY AUTO_INCREMENT,
   action ENUM('create','update','delete') NOT NULL,
@@ -98,24 +125,28 @@ ON DUPLICATE KEY UPDATE label = VALUES(label);
 
 INSERT INTO role_permissions (role_id, menu_key, can_access) VALUES
   (1, 'install_lists', 1),
+  (1, 'issues', 1),
   (1, 'programs', 1),
   (1, 'users', 1),
   (1, 'roles', 1),
   (1, 'audit_log', 1),
   (1, 'settings', 1),
   (2, 'install_lists', 1),
+  (2, 'issues', 1),
   (2, 'programs', 1),
   (2, 'users', 0),
   (2, 'roles', 0),
   (2, 'audit_log', 1),
   (2, 'settings', 0),
   (3, 'install_lists', 1),
+  (3, 'issues', 1),
   (3, 'programs', 0),
   (3, 'users', 0),
   (3, 'roles', 0),
   (3, 'audit_log', 0),
   (3, 'settings', 0),
   (4, 'install_lists', 1),
+  (4, 'issues', 1),
   (4, 'programs', 0),
   (4, 'users', 0),
   (4, 'roles', 0),

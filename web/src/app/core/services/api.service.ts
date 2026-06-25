@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Program, InstallList, UserRecord, AuditLog, PermissionMatrix, Role } from '../models';
+import { Program, InstallList, UserRecord, AuditLog, PermissionMatrix, Role, Issue } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -67,6 +67,59 @@ export class ApiService {
 
   deleteInstallList(id: number) {
     return this.http.delete(`${this.base}/install-lists/${id}`, this.opts);
+  }
+
+  // Issues
+  getIssues(search?: string, installListId?: number, includeDeleted = false) {
+    let params = new HttpParams();
+    if (search) params = params.set('search', search);
+    if (installListId) params = params.set('installListId', installListId);
+    if (includeDeleted) params = params.set('includeDeleted', 'true');
+    return this.http.get<Issue[]>(`${this.base}/issues`, { ...this.opts, params });
+  }
+
+  getIssue(id: number) {
+    return this.http.get<Issue>(`${this.base}/issues/${id}`, this.opts);
+  }
+
+  createIssue(data: {
+    installListId: number;
+    title: string;
+    description?: string;
+    status?: string;
+  }) {
+    return this.http.post<Issue>(`${this.base}/issues`, data, this.opts);
+  }
+
+  updateIssue(
+    id: number,
+    data: {
+      installListId?: number;
+      title?: string;
+      description?: string;
+      status?: string;
+    },
+  ) {
+    return this.http.put<Issue>(`${this.base}/issues/${id}`, data, this.opts);
+  }
+
+  deleteIssue(id: number) {
+    return this.http.delete(`${this.base}/issues/${id}`, this.opts);
+  }
+
+  uploadIssueAttachments(issueId: number, files: File[]) {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    return this.http.post<Issue>(`${this.base}/issues/${issueId}/attachments`, formData, this.opts);
+  }
+
+  deleteIssueAttachment(issueId: number, attachmentId: number) {
+    return this.http.delete<Issue>(
+      `${this.base}/issues/${issueId}/attachments/${attachmentId}`,
+      this.opts,
+    );
   }
 
   // Users

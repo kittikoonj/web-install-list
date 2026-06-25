@@ -10,6 +10,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 import { SettingsModule } from './settings/settings.module';
+import { IssuesModule } from './issues/issues.module';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
 import { RolePermission } from './entities/role-permission.entity';
@@ -17,6 +18,8 @@ import { Program } from './entities/program.entity';
 import { InstallList } from './entities/install-list.entity';
 import { InstallListItem } from './entities/install-list-item.entity';
 import { InstallListCustomer } from './entities/install-list-customer.entity';
+import { Issue } from './entities/issue.entity';
+import { IssueAttachment } from './entities/issue-attachment.entity';
 import { AuditLog } from './entities/audit-log.entity';
 
 @Module({
@@ -39,6 +42,8 @@ import { AuditLog } from './entities/audit-log.entity';
           InstallList,
           InstallListItem,
           InstallListCustomer,
+          Issue,
+          IssueAttachment,
           AuditLog,
         ],
         synchronize: true,
@@ -51,6 +56,7 @@ import { AuditLog } from './entities/audit-log.entity';
     UsersModule,
     ProgramsModule,
     InstallListsModule,
+    IssuesModule,
     RolesModule,
     AuditLogsModule,
     SettingsModule,

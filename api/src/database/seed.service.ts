@@ -11,6 +11,7 @@ const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
   super_admin: Object.fromEntries(MENU_KEYS.map((k) => [k, true])),
   manager: {
     install_lists: true,
+    issues: true,
     programs: true,
     users: false,
     roles: false,
@@ -19,6 +20,7 @@ const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
   },
   user: {
     install_lists: true,
+    issues: true,
     programs: false,
     users: false,
     roles: false,
@@ -27,6 +29,7 @@ const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
   },
   viewer: {
     install_lists: true,
+    issues: true,
     programs: false,
     users: false,
     roles: false,

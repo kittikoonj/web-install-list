@@ -26,6 +26,12 @@ export const routes: Routes = [
         canActivate: [menuGuard('install_lists')],
       },
       {
+        path: 'issues',
+        loadComponent: () =>
+          import('./pages/issues/issues.component').then((m) => m.IssuesComponent),
+        canActivate: [menuGuard('issues')],
+      },
+      {
         path: 'programs',
         loadComponent: () =>
           import('./pages/programs/programs.component').then(

@@ -70,8 +70,40 @@ export interface InstallList {
   deletedAt?: string;
   items?: InstallListItem[];
   customers?: InstallListCustomer[];
+  issues?: Issue[];
   programCount?: number;
   customerCount?: number;
+  issueCount?: number;
+}
+
+export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+
+export interface IssueAttachment {
+  id: number;
+  issueId: number;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  fileType: 'image' | 'file';
+  fileSize: number;
+  url: string;
+  createdAt: string;
+}
+
+export interface Issue {
+  id: number;
+  installListId: number;
+  installList?: InstallList;
+  title: string;
+  description?: string | null;
+  status: IssueStatus;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  isDelete: number;
+  deletedBy?: string;
+  deletedAt?: string;
+  attachments?: IssueAttachment[];
 }
 
 export interface AuditLog {

@@ -1,0 +1,181 @@
+<div class="page-header">
+  <h1>Issues</h1>
+  <button class="btn btn-primary" (click)="openCreate()">
+    <i class="ti ti-plus"></i> เพิ่ม Issue
+  </button>
+</div>
+
+<div class="search-bar">
+  <input
+    type="text"
+    placeholder="ค้นหาหัวข้อ issue..."
+    [(ngModel)]="search"
+    (keyup.enter)="load()"
+  />
+  <select [(ngModel)]="filterListId" (change)="load()">
+    <option value="">ทุก Install List</option>
+    @for (list of installLists(); track list.id) {
+      <option [value]="list.id">{{ list.name }}</option>
+    }
+  </select>
+  <button class="btn" (click)="load()">ค้นหา</button>
+</div>
+
+<div class="card table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>หัวข้อ</th>
+        <th>Install List</th>
+        <th>Status</th>
+        <th>ไฟล์แนบ</th>
+        <th>ผู้สร้าง</th>
+        <th>อัปเดตล่าสุด</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (issue of issues(); track issue.id) {
+        <tr [class.deleted]="issue.isDelete" [class.highlighted]="isHighlighted(issue.id)">
+          <td>
+            <div class="title-cell">
+              <span>{{ issue.title }}</span>
+              @if (issue.description) {
+                <span class="desc-preview">{{ issue.description }}</span>
+              }
+              @if (issue.isDelete) {
+                <span class="badge deleted-label">ถูกลบ</span>
+              }
+            </div>
+          </td>
+          <td>{{ listName(issue) }}</td>
+          <td>
+            <span class="status-badge" [style]="statusStyle(issue.status)">
+              {{ statusLabel(issue.status) }}
+            </span>
+          </td>
+          <td>
+            @if (issue.attachments?.length) {
+              <div class="attachment-preview">
+                @for (img of imageAttachments(issue); track img.id) {
+                  <a [href]="img.url" target="_blank" rel="noopener" class="thumb-link">
+                    <img [src]="img.url" [alt]="img.originalName" class="thumb" />
+                  </a>
+                }
+                @for (file of fileAttachments(issue); track file.id) {
+                  <a [href]="file.url" target="_blank" rel="noopener" class="file-link">
+                    <i class="ti ti-file-zip"></i> {{ file.originalName }}.zip
+                  </a>
+                }
+              </div>
+            } @else {
+              <span class="text-muted">—</span>
+            }
+          </td>
+          <td>{{ issue.createdBy || '—' }}</td>
+          <td>{{ issue.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="actions">
+            <button class="btn btn-sm" (click)="openEdit(issue)">Edit</button>
+            @if (!issue.isDelete) {
+              <button class="btn btn-sm btn-danger" (click)="deleteIssue(issue)">Del</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="7" class="empty-state">ไม่มี issue</td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editing() ? 'แก้ไข Issue' : 'เพิ่ม Issue' }}</h2>
+        <button class="icon-btn" (click)="showModal.set(false)"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Install List *</label>
+          <select [(ngModel)]="form.installListId">
+            <option [ngValue]="0" disabled>เลือก Install List</option>
+            @for (list of installLists(); track list.id) {
+              <option [ngValue]="list.id">{{ list.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>หัวข้อ *</label>
+          <input type="text" [(ngModel)]="form.title" placeholder="อธิบายปัญหาสั้นๆ" />
+        </div>
+        <div class="form-group">
+          <label>รายละเอียด</label>
+          <textarea [(ngModel)]="form.description" rows="4" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="form.status">
+            @for (s of statusOptions; track s) {
+              <option [ngValue]="s">{{ statusLabel(s) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>ไฟล์แนบ</label>
+          <p class="field-hint">รูปภาพจะแสดง preview — ไฟล์อื่นจะถูก zip ก่อนบันทึก</p>
+          <label class="upload-btn">
+            <i class="ti ti-upload"></i> เลือกไฟล์
+            <input type="file" multiple (change)="onFilesSelected($event)" />
+          </label>
+
+          @if (currentAttachments().length) {
+            <div class="attachment-list">
+              @for (att of currentAttachments(); track att.id) {
+                <div class="attachment-item">
+                  @if (att.fileType === 'image') {
+                    <img [src]="att.url" [alt]="att.originalName" class="attachment-thumb" />
+                  } @else {
+                    <a [href]="att.url" target="_blank" rel="noopener" class="attachment-file">
+                      <i class="ti ti-file-zip"></i>
+                      {{ att.originalName }}.zip
+                    </a>
+                  }
+                  <button type="button" class="icon-btn remove-att" (click)="deleteAttachment(att)">
+                    <i class="ti ti-x"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (pendingFiles().length) {
+            <div class="pending-files">
+              @for (file of pendingFiles(); track $index; let i = $index) {
+                <div class="pending-item">
+                  <i class="ti ti-file"></i>
+                  <span>{{ file.name }}</span>
+                  <span class="file-size">{{ formatSize(file.size) }}</span>
+                  <button type="button" class="icon-btn" (click)="removePendingFile(i)">
+                    <i class="ti ti-x"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" (click)="showModal.set(false)">ยกเลิก</button>
+        <button
+          class="btn btn-primary"
+          (click)="save()"
+          [disabled]="saving() || uploading() || !form.title.trim() || !form.installListId"
+        >
+          {{ uploading() ? 'กำลังอัปโหลด...' : saving() ? 'กำลังบันทึก...' : 'บันทึก' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
