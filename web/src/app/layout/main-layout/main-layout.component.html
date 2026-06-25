@@ -32,6 +32,9 @@
     <div class="sidebar-footer">
       <div class="user-name">{{ user()?.name }}</div>
       <div class="user-role">{{ user()?.role?.label }}</div>
+      <button class="btn btn-sm" (click)="openPasswordModal()">
+        <i class="ti ti-key"></i> เปลี่ยนรหัสผ่าน
+      </button>
       <button class="btn btn-sm logout-btn" (click)="logout()">
         <i class="ti ti-logout"></i> ออกจากระบบ
       </button>
@@ -42,3 +45,37 @@
     <router-outlet />
   </main>
 </div>
+
+@if (showPasswordModal()) {
+  <div class="modal-overlay" (click)="closePasswordModal()">
+    <div class="modal password-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>เปลี่ยนรหัสผ่าน</h2>
+        <button type="button" class="btn btn-sm" (click)="closePasswordModal()">×</button>
+      </div>
+      <div class="modal-body">
+        @if (passwordError()) {
+          <div class="form-error">{{ passwordError() }}</div>
+        }
+        <label>
+          รหัสผ่านปัจจุบัน
+          <input type="password" [(ngModel)]="passwordForm.currentPassword" autocomplete="current-password" />
+        </label>
+        <label>
+          รหัสผ่านใหม่
+          <input type="password" [(ngModel)]="passwordForm.newPassword" autocomplete="new-password" />
+        </label>
+        <label>
+          ยืนยันรหัสผ่านใหม่
+          <input type="password" [(ngModel)]="passwordForm.confirmPassword" autocomplete="new-password" />
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" (click)="closePasswordModal()">ยกเลิก</button>
+        <button class="btn btn-primary" (click)="savePassword()" [disabled]="passwordSaving()">
+          {{ passwordSaving() ? 'กำลังบันทึก...' : 'บันทึก' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -10,6 +10,7 @@ import {
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { SessionGuard } from '../common/guards/session.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../entities/user.entity';
@@ -58,5 +59,19 @@ export class AuthController {
       user: this.authService.sanitizeUser(user),
       menus,
     };
+  }
+
+  @Post('change-password')
+  @UseGuards(SessionGuard)
+  async changePassword(
+    @CurrentUser() user: User,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
+    return { ok: true };
   }
 }

@@ -51,6 +51,14 @@ export class AuthService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.http.post<{ ok: boolean }>(
+      `${this.api}/change-password`,
+      { currentPassword, newPassword },
+      { withCredentials: true },
+    );
+  }
+
   canAccess(menuKey: string): boolean {
     return !!this.menus()[menuKey];
   }

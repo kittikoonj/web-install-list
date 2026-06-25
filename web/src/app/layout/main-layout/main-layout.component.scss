@@ -113,9 +113,14 @@
     margin-bottom: 8px;
   }
 
-  .logout-btn {
+  .btn {
     width: 100%;
     justify-content: center;
+    margin-bottom: 6px;
+  }
+
+  .logout-btn {
+    margin-bottom: 0;
   }
 }
 

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -86,5 +86,32 @@ export class AuthService {
       },
       status: user.status,
     };
+  }
+
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepo.findOne({
+      where: { id: userId, isDelete: 0 },
+      select: { id: true, password: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException('ไม่พบบัญชี');
+    }
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      throw new UnauthorizedException('รหัสผ่านปัจจุบันไม่ถูกต้อง');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม');
+    }
+
+    await this.userRepo.update(userId, {
+      password: await bcrypt.hash(newPassword, 10),
+    });
   }
 }
