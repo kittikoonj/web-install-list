@@ -29,9 +29,23 @@
   max-width: 220px;
 }
 
+.thumb-wrap,
+.attachment-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .thumb-link {
   display: block;
   line-height: 0;
+}
+
+.view-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .thumb {

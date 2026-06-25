@@ -15,6 +15,10 @@ import {
 } from '../../core/models';
 import { MethodBadgeComponent } from '../../shared/method-badge/method-badge.component';
 import { ISSUE_STATUS } from '../../core/constants';
+import {
+  ImageViewerComponent,
+  ImageViewItem,
+} from '../../shared/image-viewer/image-viewer.component';
 
 interface GroupedProgram {
   program: Program;
@@ -42,7 +46,7 @@ interface ListDetail {
 
 @Component({
   selector: 'app-install-lists',
-  imports: [FormsModule, DatePipe, MethodBadgeComponent],
+  imports: [FormsModule, DatePipe, MethodBadgeComponent, ImageViewerComponent],
   templateUrl: './install-lists.component.html',
   styleUrl: './install-lists.component.scss',
 })
@@ -67,6 +71,7 @@ export class InstallListsComponent implements OnInit {
   loadingDetail = signal<number | null>(null);
   listDetails = signal<Map<number, ListDetail>>(new Map());
   readonly issueStatusMeta = ISSUE_STATUS;
+  viewingImage = signal<ImageViewItem | null>(null);
   openInstallerPicker = signal<number | null>(null);
   installerFilter = signal('');
 
@@ -354,5 +359,14 @@ export class InstallListsComponent implements OnInit {
 
   issueFiles(issue: Issue) {
     return (issue.attachments ?? []).filter((a) => a.fileType === 'file');
+  }
+
+  viewIssueImage(att: { url: string; originalName: string }, event: MouseEvent) {
+    event.stopPropagation();
+    this.viewingImage.set({ url: att.url, originalName: att.originalName });
+  }
+
+  closeImageView() {
+    this.viewingImage.set(null);
   }
 }

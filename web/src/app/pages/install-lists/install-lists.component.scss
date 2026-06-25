@@ -143,6 +143,19 @@
   align-items: center;
 }
 
+.thumb-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .thumb-link {
   display: block;
   line-height: 0;

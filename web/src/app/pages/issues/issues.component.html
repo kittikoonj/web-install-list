@@ -58,9 +58,12 @@
             @if (issue.attachments?.length) {
               <div class="attachment-preview">
                 @for (img of imageAttachments(issue); track img.id) {
-                  <a [href]="img.url" target="_blank" rel="noopener" class="thumb-link">
+                  <div class="thumb-wrap">
                     <img [src]="img.url" [alt]="img.originalName" class="thumb" />
-                  </a>
+                    <button type="button" class="btn btn-sm view-btn" (click)="viewAttachment(img)">
+                      View
+                    </button>
+                  </div>
                 }
                 @for (file of fileAttachments(issue); track file.id) {
                   <a [href]="file.url" target="_blank" rel="noopener" class="file-link">
@@ -135,7 +138,12 @@
               @for (att of currentAttachments(); track att.id) {
                 <div class="attachment-item">
                   @if (att.fileType === 'image') {
-                    <img [src]="att.url" [alt]="att.originalName" class="attachment-thumb" />
+                    <div class="attachment-image">
+                      <img [src]="att.url" [alt]="att.originalName" class="attachment-thumb" />
+                      <button type="button" class="btn btn-sm view-btn" (click)="viewAttachment(att)">
+                        View
+                      </button>
+                    </div>
                   } @else {
                     <a [href]="att.url" target="_blank" rel="noopener" class="attachment-file">
                       <i class="ti ti-file-zip"></i>
@@ -154,9 +162,14 @@
             <div class="pending-files">
               @for (file of pendingFiles(); track $index; let i = $index) {
                 <div class="pending-item">
-                  <i class="ti ti-file"></i>
+                  <i class="ti" [class]="isImageFile(file) ? 'ti-photo' : 'ti-file'"></i>
                   <span>{{ file.name }}</span>
                   <span class="file-size">{{ formatSize(file.size) }}</span>
+                  @if (isImageFile(file)) {
+                    <button type="button" class="btn btn-sm view-btn" (click)="viewPendingFile(file)">
+                      View
+                    </button>
+                  }
                   <button type="button" class="icon-btn" (click)="removePendingFile(i)">
                     <i class="ti ti-x"></i>
                   </button>
@@ -179,3 +192,5 @@
     </div>
   </div>
 }
+
+<app-image-viewer [image]="viewingImage()" (closed)="closeImageView()" />

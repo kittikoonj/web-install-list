@@ -181,15 +181,16 @@
                               @if (issue.attachments?.length) {
                                 <div class="attachment-preview">
                                   @for (img of issueImages(issue); track img.id) {
-                                    <a
-                                      [href]="img.url"
-                                      target="_blank"
-                                      rel="noopener"
-                                      class="thumb-link"
-                                      (click)="$event.stopPropagation()"
-                                    >
+                                    <div class="thumb-wrap" (click)="$event.stopPropagation()">
                                       <img [src]="img.url" [alt]="img.originalName" class="thumb" />
-                                    </a>
+                                      <button
+                                        type="button"
+                                        class="btn btn-sm view-btn"
+                                        (click)="viewIssueImage(img, $event)"
+                                      >
+                                        View
+                                      </button>
+                                    </div>
                                   }
                                   @for (file of issueFiles(issue); track file.id) {
                                     <a
@@ -410,3 +411,5 @@
     </div>
   </div>
 }
+
+<app-image-viewer [image]="viewingImage()" (closed)="closeImageView()" />

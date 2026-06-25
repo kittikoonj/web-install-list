@@ -1,18 +1,22 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { Issue, IssueAttachment, IssueStatus, InstallList } from '../../core/models';
 import { ISSUE_STATUS } from '../../core/constants';
+import {
+  ImageViewerComponent,
+  ImageViewItem,
+} from '../../shared/image-viewer/image-viewer.component';
 
 @Component({
   selector: 'app-issues',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, ImageViewerComponent],
   templateUrl: './issues.component.html',
   styleUrl: './issues.component.scss',
 })
-export class IssuesComponent implements OnInit {
+export class IssuesComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
 
@@ -27,6 +31,8 @@ export class IssuesComponent implements OnInit {
   uploading = signal(false);
   pendingFiles = signal<File[]>([]);
   currentAttachments = signal<IssueAttachment[]>([]);
+  viewingImage = signal<ImageViewItem | null>(null);
+  private blobUrls: string[] = [];
 
   form = {
     installListId: 0,
@@ -195,5 +201,30 @@ export class IssuesComponent implements OnInit {
 
   isHighlighted(issueId: number): boolean {
     return this.highlightIssueId === issueId;
+  }
+
+  viewAttachment(att: IssueAttachment) {
+    this.viewingImage.set({ url: att.url, originalName: att.originalName });
+  }
+
+  viewPendingFile(file: File) {
+    if (!file.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(file);
+    this.blobUrls.push(url);
+    this.viewingImage.set({ url, originalName: file.name });
+  }
+
+  closeImageView() {
+    this.viewingImage.set(null);
+  }
+
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+
+  ngOnDestroy() {
+    for (const url of this.blobUrls) {
+      URL.revokeObjectURL(url);
+    }
   }
 }
