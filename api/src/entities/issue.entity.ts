@@ -24,6 +24,9 @@ export class Issue {
   @JoinColumn({ name: 'install_list_id' })
   installList: InstallList;
 
+  @Column({ name: 'customer_name', type: 'varchar', length: 200, nullable: true })
+  customerName: string | null;
+
   @Column({ type: 'varchar', length: 200 })
   title: string;
 

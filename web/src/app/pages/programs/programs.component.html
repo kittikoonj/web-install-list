@@ -10,6 +10,10 @@
 <div class="search-bar">
   <input type="text" placeholder="ค้นหาชื่อ program..." [(ngModel)]="search" (keyup.enter)="load()" />
   <button class="btn" (click)="load()">ค้นหา</button>
+  <div class="toggle-group">
+    <button [class.active]="activeOnly()" (click)="toggleFilter(true)">ไม่รวมที่ลบ</button>
+    <button [class.active]="!activeOnly()" (click)="toggleFilter(false)">รวมที่ลบแล้ว</button>
+  </div>
 </div>
 
 <div class="card table-wrap">
@@ -17,26 +21,31 @@
     <thead>
       <tr>
         <th>Program</th>
+        <th>OS</th>
         <th>Version</th>
         <th>GitHub URL</th>
         <th>Methods</th>
+        <th>สถานะ</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
       @for (p of programs(); track p.id) {
-        <tr [class.deleted]="p.isDelete">
+        <tr [class.deleted]="isDeleted(p)" [class.inactive]="!isDeleted(p) && !isActive(p)">
           <td>
             <div class="program-cell">
               <span class="program-icon" [style.background]="p.iconBg">
                 <i class="ti" [class]="p.icon" [style.color]="p.iconFg"></i>
               </span>
               <span>{{ p.name }}</span>
-              @if (p.isDelete) {
+              @if (isDeleted(p)) {
                 <span class="badge deleted-label">ถูกลบ</span>
+              } @else if (!isActive(p)) {
+                <span class="badge inactive-label">ปิดใช้งาน</span>
               }
             </div>
           </td>
+          <td>{{ p.os?.name || '—' }}</td>
           <td>{{ p.version || '—' }}</td>
           <td class="url-cell">{{ truncateUrl(p.githubUrl) }}</td>
           <td>
@@ -44,8 +53,28 @@
               <app-method-badge [method]="m" />
             }
           </td>
+          <td>
+            @if (!isDeleted(p)) {
+              @if (isActive(p)) {
+                <span class="status-badge active">เปิดใช้งาน</span>
+              } @else {
+                <span class="status-badge inactive">ปิดใช้งาน</span>
+              }
+            } @else {
+              <span class="text-muted">—</span>
+            }
+          </td>
           <td class="actions">
             @if (canWrite()) {
+              @if (!isDeleted(p)) {
+                <button
+                  class="btn btn-sm"
+                  [class.btn-primary]="!isActive(p)"
+                  (click)="toggleActive(p)"
+                >
+                  {{ isActive(p) ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                </button>
+              }
               <button class="btn btn-sm" (click)="openEdit(p)">Edit</button>
               @if (!p.isDelete) {
                 <button class="btn btn-sm btn-danger" (click)="deleteProgram(p)">Del</button>
@@ -54,7 +83,7 @@
           </td>
         </tr>
       } @empty {
-        <tr><td colspan="5" class="empty-state">ไม่มี program</td></tr>
+        <tr><td colspan="7" class="empty-state">ไม่มี program</td></tr>
       }
     </tbody>
   </table>
@@ -72,7 +101,27 @@
           <div class="form-main">
             <div class="form-group">
               <label>ชื่อ program *</label>
-              <input type="text" [(ngModel)]="form.name" />
+              <ng-select
+                [items]="programNameOptions()"
+                bindLabel="name"
+                bindValue="name"
+                [(ngModel)]="form.name"
+                [clearable]="true"
+                placeholder="เลือกชื่อ program"
+                notFoundText="ไม่พบ — เพิ่มได้ที่หน้า Settings"
+              />
+            </div>
+            <div class="form-group">
+              <label>OS</label>
+              <ng-select
+                [items]="osOptions()"
+                bindLabel="name"
+                bindValue="id"
+                [(ngModel)]="form.osId"
+                [clearable]="true"
+                placeholder="เลือก OS"
+                notFoundText="ไม่พบ — เพิ่มได้ที่หน้า Settings"
+              />
             </div>
             <div class="form-group">
               <label>Version</label>

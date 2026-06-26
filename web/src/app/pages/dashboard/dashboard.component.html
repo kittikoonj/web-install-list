@@ -1,65 +1,290 @@
 <div class="page-header">
-  <h1>Dashboard</h1>
+  <div class="header-row">
+    <h1>Dashboard</h1>
+    <span class="health-badge" [class]="healthClass()">
+      <i class="ti ti-heartbeat"></i> {{ healthLabel() }}
+    </span>
+    <button type="button" class="btn btn-sm refresh-btn" appTooltip="รีเฟรช" (click)="load()">
+      <i class="ti ti-refresh"></i>
+    </button>
+  </div>
+  @if (canWrite()) {
+    <div class="quick-actions">
+      @if (canAccess('install_lists')) {
+        <a routerLink="/install-lists" class="btn btn-sm" appTooltip="Install Lists">
+          <i class="ti ti-list-check"></i>
+        </a>
+      }
+      @if (canAccess('issues')) {
+        <a routerLink="/issues" [queryParams]="{ create: '1' }" class="btn btn-sm btn-primary" appTooltip="สร้าง Issue">
+          <i class="ti ti-plus"></i>
+        </a>
+      }
+      @if (canAccess('programs')) {
+        <a routerLink="/programs" class="btn btn-sm" appTooltip="Programs">
+          <i class="ti ti-apps"></i>
+        </a>
+      }
+    </div>
+  }
 </div>
 
 @if (stats(); as s) {
+  @if (canAccess('install_lists')) {
+    <div class="card overview-bar">
+      <div class="overview-progress">
+        <div class="progress-ring" [class]="progressClass(s.overallProgressPercent)">
+          <span class="ring-value">{{ s.overallProgressPercent }}%</span>
+        </div>
+        <div class="overview-text">
+          <div class="overview-title">ความคืบหน้าติดตั้งรวม</div>
+          <div class="overview-sub">
+            ติดตั้งครบ {{ s.completedCustomers }}/{{ s.totalCustomers }} sites
+            · {{ s.listsWithIncomplete }} lists ยังไม่เสร็จ
+          </div>
+        </div>
+      </div>
+      @if (s.totalIncompleteCustomers > 0) {
+        <a routerLink="/install-lists" class="btn btn-sm overview-action">ดูงานค้าง</a>
+      }
+    </div>
+  }
+
   <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Install Lists</div>
-      <div class="stat-value">{{ s.activeLists }} <span class="stat-sub">/ {{ s.totalLists }}</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Programs</div>
-      <div class="stat-value">{{ s.totalPrograms }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Issues</div>
-      <div class="stat-value">{{ s.openIssues }} <span class="stat-sub">open / {{ s.totalIssues }}</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Users</div>
-      <div class="stat-value">{{ s.totalUsers }}</div>
-    </div>
+    @if (canAccess('install_lists')) {
+      <a routerLink="/install-lists" class="stat-card stat-link">
+        <div class="stat-icon"><i class="ti ti-list-check"></i></div>
+        <div class="stat-body">
+          <div class="stat-label">Install Lists</div>
+          <div class="stat-value">{{ s.activeLists }}<span class="stat-sub">/{{ s.totalLists }}</span></div>
+        </div>
+      </a>
+      <a routerLink="/install-lists" class="stat-card stat-link stat-warning">
+        <div class="stat-icon warn"><i class="ti ti-alert-triangle"></i></div>
+        <div class="stat-body">
+          <div class="stat-label">ติดตั้งไม่เสร็จ</div>
+          <div class="stat-value">{{ s.totalIncompleteCustomers }}</div>
+          <div class="stat-foot">{{ s.listsWithIncomplete }} lists</div>
+        </div>
+      </a>
+      <a routerLink="/install-lists" class="stat-card stat-link">
+        <div class="stat-icon"><i class="ti ti-building"></i></div>
+        <div class="stat-body">
+          <div class="stat-label">ลูกค้า / Site</div>
+          <div class="stat-value">{{ s.totalCustomers }}</div>
+        </div>
+      </a>
+    }
+    @if (canAccess('issues')) {
+      <a routerLink="/issues" [queryParams]="{ status: 'open' }" class="stat-card stat-link">
+        <div class="stat-icon issue"><i class="ti ti-bug"></i></div>
+        <div class="stat-body">
+          <div class="stat-label">Issues เปิด</div>
+          <div class="stat-value">{{ s.openIssues + s.inProgressIssues }}</div>
+          <div class="stat-foot">open + in progress</div>
+        </div>
+      </a>
+    }
+    @if (canAccess('programs')) {
+      <a routerLink="/programs" class="stat-card stat-link">
+        <div class="stat-icon"><i class="ti ti-apps"></i></div>
+        <div class="stat-body">
+          <div class="stat-label">Programs</div>
+          <div class="stat-value">{{ s.activePrograms }}</div>
+          @if (s.inactivePrograms > 0) {
+            <div class="stat-foot">{{ s.inactivePrograms }} ปิดใช้งาน</div>
+          }
+        </div>
+      </a>
+    }
+    @if (canAccess('users')) {
+      <a routerLink="/users" class="stat-card stat-link">
+        <div class="stat-icon"><i class="ti ti-users"></i></div>
+        <div class="stat-body">
+          <div class="stat-label">Users</div>
+          <div class="stat-value">{{ s.totalUsers }}</div>
+        </div>
+      </a>
+    }
   </div>
+
+  @if (canAccess('issues') && issueTotal() > 0) {
+    <div class="card issue-status-bar">
+      <div class="issue-status-head">
+        <span class="issue-status-title">Issues ตาม Status</span>
+        <span class="status-total muted">ทั้งหมด {{ s.totalIssues }}</span>
+      </div>
+      <div class="issue-segment-bar">
+        @for (status of issueStatusOrder; track status) {
+          @if (issueCount(status) > 0) {
+            <a
+              routerLink="/issues"
+              [queryParams]="{ status }"
+              class="segment"
+              [style.flex]="issueCount(status)"
+              [style.background]="statusColor(status)"
+              [appTooltip]="statusLabel(status) + ': ' + issueCount(status)"
+            ></a>
+          }
+        }
+      </div>
+      <div class="issue-status-chips">
+        @for (status of issueStatusOrder; track status) {
+          <a
+            routerLink="/issues"
+            [queryParams]="{ status }"
+            class="status-chip"
+            [style]="statusStyle(status)"
+          >
+            <span class="chip-label">{{ statusLabel(status) }}</span>
+            <span class="chip-count">{{ issueCount(status) }}</span>
+          </a>
+        }
+      </div>
+    </div>
+  }
 
   <div class="panels">
-    <div class="card panel">
-      <div class="panel-header">
-        <h2>Install Lists ล่าสุด</h2>
-        <a routerLink="/install-lists" class="link">ดูทั้งหมด</a>
+    @if (canAccess('install_lists')) {
+      <div class="card panel panel-wide">
+        <div class="panel-header">
+          <h2><i class="ti ti-progress-alert"></i> Lists ที่ติดตั้งไม่เสร็จ</h2>
+          <a routerLink="/install-lists" class="link">ดูทั้งหมด</a>
+        </div>
+        <ul class="list progress-list">
+          @for (list of s.incompleteLists; track list.id) {
+            <li>
+              <div class="list-row-top">
+                <a [routerLink]="['/install-lists']" class="list-link">{{ list.name }}</a>
+                <span class="incomplete-count">{{ list.incompleteCustomerCount }}/{{ list.customerCount }} sites</span>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-bar">
+                  <div
+                    class="progress-fill"
+                    [class]="progressClass(list.progressPercent)"
+                    [style.width.%]="list.progressPercent"
+                  ></div>
+                </div>
+                <span class="progress-text">{{ list.progressPercent }}%</span>
+              </div>
+            </li>
+          } @empty {
+            <li class="empty"><i class="ti ti-circle-check"></i> ทุก list ติดตั้งครบแล้ว</li>
+          }
+        </ul>
       </div>
-      <ul class="list">
-        @for (list of s.recentLists; track list.id) {
-          <li>
-            <span>{{ list.name }}</span>
-            <span class="muted">{{ list.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
-          </li>
-        } @empty {
-          <li class="empty">ไม่มีข้อมูล</li>
-        }
-      </ul>
+    }
+
+    <div class="panels-row">
+      @if (canAccess('issues')) {
+        <div class="card panel">
+          <div class="panel-header">
+            <h2><i class="ti ti-flag"></i> Issues ต้องติดตาม</h2>
+            <a routerLink="/issues" [queryParams]="{ status: 'open' }" class="link">ดูทั้งหมด</a>
+          </div>
+          <ul class="list">
+            @for (issue of s.pendingIssues; track issue.id) {
+              <li>
+                <div class="issue-row">
+                  <a
+                    [routerLink]="['/issues']"
+                    [queryParams]="{ issueId: issue.id }"
+                    class="list-link"
+                  >
+                    {{ issue.title }}
+                  </a>
+                  <span class="status-badge" [style]="statusStyle(issue.status)">
+                    {{ statusLabel(issue.status) }}
+                  </span>
+                </div>
+                <span class="muted">{{ issueMeta(issue) }} · {{ issue.updatedAt | date:'dd/MM/yy HH:mm' }}</span>
+              </li>
+            } @empty {
+              <li class="empty">ไม่มี issue ที่ต้องติดตาม</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (canAccess('install_lists')) {
+        <div class="card panel">
+          <div class="panel-header">
+            <h2><i class="ti ti-clock"></i> Lists ล่าสุด</h2>
+            <a routerLink="/install-lists" class="link">ดูทั้งหมด</a>
+          </div>
+          <ul class="list compact-list">
+            @for (list of s.recentLists; track list.id) {
+              <li>
+                <a [routerLink]="['/install-lists']" class="list-link">{{ list.name }}</a>
+                <span class="muted">{{ list.updatedAt | date:'dd/MM/yy HH:mm' }}</span>
+              </li>
+            } @empty {
+              <li class="empty">ไม่มีข้อมูล</li>
+            }
+          </ul>
+        </div>
+      }
     </div>
 
-    <div class="card panel">
-      <div class="panel-header">
-        <h2>Issues ล่าสุด</h2>
-        <a routerLink="/issues" class="link">ดูทั้งหมด</a>
-      </div>
-      <ul class="list">
-        @for (issue of s.recentIssues; track issue.id) {
-          <li>
-            <div class="issue-row">
-              <span>{{ issue.title }}</span>
-              <span class="status-badge" [style]="statusStyle(issue.status)">{{ statusLabel(issue.status) }}</span>
-            </div>
-            <span class="muted">{{ issue.installListName || '—' }} · {{ issue.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
-          </li>
-        } @empty {
-          <li class="empty">ไม่มีข้อมูล</li>
-        }
-      </ul>
+    <div class="panels-row">
+      @if (canAccess('issues')) {
+        <div class="card panel">
+          <div class="panel-header">
+            <h2><i class="ti ti-history"></i> Issues ล่าสุด</h2>
+            <a routerLink="/issues" class="link">ดูทั้งหมด</a>
+          </div>
+          <ul class="list">
+            @for (issue of s.recentIssues; track issue.id) {
+              <li>
+                <div class="issue-row">
+                  <a
+                    [routerLink]="['/issues']"
+                    [queryParams]="{ issueId: issue.id }"
+                    class="list-link"
+                  >
+                    {{ issue.title }}
+                  </a>
+                  <span class="status-badge" [style]="statusStyle(issue.status)">
+                    {{ statusLabel(issue.status) }}
+                  </span>
+                </div>
+                <span class="muted">{{ issueMeta(issue) }} · {{ issue.updatedAt | date:'dd/MM/yy HH:mm' }}</span>
+              </li>
+            } @empty {
+              <li class="empty">ไม่มีข้อมูล</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (canAccess('audit_log')) {
+        <div class="card panel">
+          <div class="panel-header">
+            <h2><i class="ti ti-history"></i> กิจกรรมล่าสุด</h2>
+            <a routerLink="/audit-log" class="link">Audit Log</a>
+          </div>
+          <ul class="list activity-list">
+            @for (log of s.recentAuditLogs; track log.id) {
+              <li>
+                <div class="activity-row">
+                  <span class="action-badge action-{{ log.action }}">
+                    {{ actionLabels[log.action] || log.action }}
+                  </span>
+                  <span class="activity-text">{{ auditSummary(log) }}</span>
+                </div>
+                <span class="muted">{{ log.performedBy || '—' }} · {{ log.performedAt | date:'dd/MM/yy HH:mm' }}</span>
+              </li>
+            } @empty {
+              <li class="empty">ยังไม่มีกิจกรรม</li>
+            }
+          </ul>
+        </div>
+      }
     </div>
   </div>
+} @else if (loading()) {
+  <div class="loading"><i class="ti ti-loader"></i> กำลังโหลด...</div>
 } @else {
-  <div class="loading">กำลังโหลด...</div>
+  <div class="empty card">โหลดข้อมูลไม่สำเร็จ — <button class="btn btn-sm" (click)="load()">ลองอีกครั้ง</button></div>
 }

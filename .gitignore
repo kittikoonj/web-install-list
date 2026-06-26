@@ -3,4 +3,5 @@ dist/
 .env
 api/.env
 uploads/
+logs/
 .DS_Store

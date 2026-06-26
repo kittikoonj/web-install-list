@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -11,7 +12,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
-import { CreateProgramDto, UpdateProgramDto } from './dto/program.dto';
+import { CreateProgramDto, UpdateProgramDto, ToggleProgramActiveDto } from './dto/program.dto';
 import { SessionGuard } from '../common/guards/session.guard';
 import { RequireMenu } from '../common/decorators/require-menu.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -56,6 +57,16 @@ export class ProgramsController {
     @CurrentUser() user: User,
   ) {
     return this.programsService.update(id, dto, user.name);
+  }
+
+  @Patch(':id/active')
+  @RequireMenu('programs')
+  toggleActive(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ToggleProgramActiveDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.programsService.toggleActive(id, !!dto.isActive, user.name);
   }
 
   @Delete(':id')

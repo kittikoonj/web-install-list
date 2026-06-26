@@ -44,6 +44,34 @@ npm start
 
 Web รันที่ `http://localhost:4200`
 
+## PM2 (Production)
+
+```bash
+# ติดตั้ง dependencies และ build
+cd api && npm install && npm run build && cd ..
+cd web && npm install && npm run build && cd ..
+
+# ตั้งค่า api/.env (CORS_ORIGIN ควรชี้ไปพอร์ต web เช่น http://localhost:8080)
+cp api/.env.example api/.env
+
+# start ด้วย PM2
+npm run pm2:start
+
+# คำสั่งอื่น
+npm run pm2:status
+npm run pm2:logs
+npm run pm2:restart
+npm run pm2:stop
+npm run pm2:save    # บันทึก process list ให้ auto-start หลัง reboot
+```
+
+| Process | Port | Description |
+|---------|------|-------------|
+| install-list-api | 3000 | NestJS API (`api/dist/main.js`) |
+| install-list-web | 8080 | Angular static + proxy `/api` |
+
+Web: `http://localhost:8080` · API: `http://localhost:3000/api`
+
 ## บัญชีเริ่มต้น
 
 | Email | Password | Role |

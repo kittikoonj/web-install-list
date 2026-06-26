@@ -9,6 +9,18 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../entities/user.entity';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { AuditService } from '../common/audit.service';
+import {
+  auditChanges,
+  auditCreatedSummary,
+  auditDeletedSummary,
+} from '../common/audit.util';
+
+const USER_LABELS: Record<string, string> = {
+  name: 'ชื่อ',
+  email: 'อีเมล',
+  roleId: 'Role',
+  status: 'สถานะ',
+};
 
 @Injectable()
 export class UsersService {
@@ -79,6 +91,15 @@ export class UsersService {
       objectId: saved.id,
       objectName: saved.name,
       performedBy,
+      details: auditCreatedSummary(
+        {
+          name: saved.name,
+          email: saved.email,
+          roleId: saved.roleId,
+          status: saved.status,
+        },
+        USER_LABELS,
+      ),
     });
 
     return this.findOne(saved.id);
@@ -92,6 +113,13 @@ export class UsersService {
       if (existing) throw new ConflictException('อีเมลนี้ถูกใช้แล้ว');
     }
 
+    const before = {
+      name: user.name,
+      email: user.email,
+      roleId: user.roleId,
+      status: user.status,
+    };
+
     if (dto.password) {
       dto.password = await bcrypt.hash(dto.password, 10);
     }
@@ -99,12 +127,23 @@ export class UsersService {
     Object.assign(user, dto);
     const saved = await this.userRepo.save(user);
 
+    const after = {
+      name: saved.name,
+      email: saved.email,
+      roleId: saved.roleId,
+      status: saved.status,
+    };
+
+    const details = auditChanges(before, after, USER_LABELS);
+    const passwordNote = dto.password ? 'เปลี่ยนรหัสผ่าน' : undefined;
+
     await this.auditService.log({
       action: 'update',
       objectType: 'user',
       objectId: saved.id,
       objectName: saved.name,
       performedBy,
+      details: [details, passwordNote].filter(Boolean).join('; ') || undefined,
     });
 
     return this.findOne(saved.id);
@@ -123,6 +162,7 @@ export class UsersService {
       objectId: user.id,
       objectName: user.name,
       performedBy,
+      details: auditDeletedSummary('ผู้ใช้', user.name),
     });
 
     return { ok: true };

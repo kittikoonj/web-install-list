@@ -1,15 +1,16 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Program, InstallMethod } from '../../core/models';
+import { Program, InstallMethod, SettingOs, SettingProgramName } from '../../core/models';
 import { MethodBadgeComponent } from '../../shared/method-badge/method-badge.component';
 import { IconPickerComponent } from '../../shared/icon-picker/icon-picker.component';
 import { ICON_PALETTE } from '../../core/constants';
 
 @Component({
   selector: 'app-programs',
-  imports: [FormsModule, MethodBadgeComponent, IconPickerComponent],
+  imports: [FormsModule, NgSelectModule, MethodBadgeComponent, IconPickerComponent],
   templateUrl: './programs.component.html',
   styleUrl: './programs.component.scss',
 })
@@ -18,13 +19,17 @@ export class ProgramsComponent implements OnInit {
   private readonly auth = inject(AuthService);
 
   programs = signal<Program[]>([]);
+  osOptions = signal<SettingOs[]>([]);
+  programNameOptions = signal<SettingProgramName[]>([]);
   search = '';
+  activeOnly = signal(true);
   showModal = signal(false);
   editing = signal<Program | null>(null);
   saving = signal(false);
 
   form = {
     name: '',
+    osId: null as number | null,
     version: '',
     githubUrl: '',
     methods: [] as InstallMethod[],
@@ -38,18 +43,37 @@ export class ProgramsComponent implements OnInit {
 
   ngOnInit() {
     this.load();
+    this.loadLookups();
+  }
+
+  loadLookups() {
+    this.api.lookupOs().subscribe((data) => this.osOptions.set(data));
+    this.api.lookupProgramNames().subscribe((data) => this.programNameOptions.set(data));
   }
 
   load() {
-    this.api.getPrograms(this.search || undefined, true).subscribe((data) => {
-      this.programs.set(data);
+    const includeDeleted = !this.activeOnly();
+    this.api.getPrograms(this.search || undefined, includeDeleted).subscribe((data) => {
+      this.programs.set(
+        includeDeleted ? data : data.filter((p) => !this.isDeleted(p)),
+      );
     });
+  }
+
+  isDeleted(program: Program): boolean {
+    return Number(program.isDelete) === 1;
+  }
+
+  toggleFilter(active: boolean) {
+    this.activeOnly.set(active);
+    this.load();
   }
 
   openCreate() {
     this.editing.set(null);
     this.form = {
       name: '',
+      osId: null,
       version: '',
       githubUrl: '',
       methods: [],
@@ -58,6 +82,7 @@ export class ProgramsComponent implements OnInit {
       iconFg: ICON_PALETTE[0].fg,
       note: '',
     };
+    this.loadLookups();
     this.showModal.set(true);
   }
 
@@ -65,6 +90,7 @@ export class ProgramsComponent implements OnInit {
     this.editing.set(program);
     this.form = {
       name: program.name,
+      osId: program.osId ?? null,
       version: program.version ?? '',
       githubUrl: program.githubUrl,
       methods: [...program.methods],
@@ -73,6 +99,7 @@ export class ProgramsComponent implements OnInit {
       iconFg: program.iconFg,
       note: program.note ?? '',
     };
+    this.loadLookups();
     this.showModal.set(true);
   }
 
@@ -112,6 +139,17 @@ export class ProgramsComponent implements OnInit {
   deleteProgram(program: Program) {
     if (!confirm(`ลบ program "${program.name}"?`)) return;
     this.api.deleteProgram(program.id).subscribe(() => this.load());
+  }
+
+  toggleActive(program: Program) {
+    const next = !program.isActive;
+    const action = next ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+    if (!confirm(`${action} program "${program.name}"?`)) return;
+    this.api.toggleProgramActive(program.id, next).subscribe(() => this.load());
+  }
+
+  isActive(program: Program): boolean {
+    return !!program.isActive;
   }
 
   canWrite(): boolean {

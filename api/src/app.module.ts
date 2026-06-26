@@ -21,6 +21,10 @@ import { InstallList } from './entities/install-list.entity';
 import { InstallListItem } from './entities/install-list-item.entity';
 import { InstallListCustomer } from './entities/install-list-customer.entity';
 import { InstallListCustomerItem } from './entities/install-list-customer-item.entity';
+import { InstallListDocument } from './entities/install-list-document.entity';
+import { SettingOs } from './entities/setting-os.entity';
+import { SettingProgramName } from './entities/setting-program-name.entity';
+import { SettingCustomerName } from './entities/setting-customer-name.entity';
 import { Issue } from './entities/issue.entity';
 import { IssueAttachment } from './entities/issue-attachment.entity';
 import { IssueComment } from './entities/issue-comment.entity';
@@ -47,6 +51,10 @@ import { AuditLog } from './entities/audit-log.entity';
           InstallListItem,
           InstallListCustomer,
           InstallListCustomerItem,
+          InstallListDocument,
+          SettingOs,
+          SettingProgramName,
+          SettingCustomerName,
           Issue,
           IssueAttachment,
           IssueComment,

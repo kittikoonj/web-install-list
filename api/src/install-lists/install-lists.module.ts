@@ -4,6 +4,8 @@ import { InstallList } from '../entities/install-list.entity';
 import { InstallListItem } from '../entities/install-list-item.entity';
 import { InstallListCustomer } from '../entities/install-list-customer.entity';
 import { InstallListCustomerItem } from '../entities/install-list-customer-item.entity';
+import { InstallListDocument } from '../entities/install-list-document.entity';
+import { Program } from '../entities/program.entity';
 import { InstallListsService } from './install-lists.service';
 import { InstallListsController } from './install-lists.controller';
 
@@ -14,6 +16,8 @@ import { InstallListsController } from './install-lists.controller';
       InstallListItem,
       InstallListCustomer,
       InstallListCustomerItem,
+      InstallListDocument,
+      Program,
     ]),
   ],
   providers: [InstallListsService],

@@ -10,5 +10,7 @@ test.describe('Dashboard', () => {
   test('loads dashboard stats', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
     await expect(page.locator('.stat-card').first()).toBeVisible();
+    await expect(page.getByText('ติดตั้งไม่เสร็จ')).toBeVisible();
+    await expect(page.getByText('Issues ตาม Status')).toBeVisible();
   });
 });

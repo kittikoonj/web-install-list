@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets, In } from 'typeorm';
 import type { Response } from 'express';
@@ -6,9 +6,17 @@ import { InstallList } from '../entities/install-list.entity';
 import { InstallListItem } from '../entities/install-list-item.entity';
 import { InstallListCustomer } from '../entities/install-list-customer.entity';
 import { InstallListCustomerItem } from '../entities/install-list-customer-item.entity';
+import { InstallListDocument } from '../entities/install-list-document.entity';
+import { Program } from '../entities/program.entity';
 import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto } from './dto/install-list.dto';
 import { AuditService } from '../common/audit.service';
+import { auditDeletedSummary } from '../common/audit.util';
 import { attachmentPublicPath } from '../issues/issue-upload.util';
+import {
+  documentPublicPath,
+  removeListDocumentFile,
+  storeListDocument,
+} from './install-list-upload.util';
 
 @Injectable()
 export class InstallListsService {
@@ -21,8 +29,21 @@ export class InstallListsService {
     private readonly customerRepo: Repository<InstallListCustomer>,
     @InjectRepository(InstallListCustomerItem)
     private readonly customerItemRepo: Repository<InstallListCustomerItem>,
+    @InjectRepository(InstallListDocument)
+    private readonly documentRepo: Repository<InstallListDocument>,
+    @InjectRepository(Program)
+    private readonly programRepo: Repository<Program>,
     private readonly auditService: AuditService,
   ) {}
+
+  private installListPayloadSummary(dto: CreateInstallListDto): string {
+    const itemCount = dto.items?.length ?? 0;
+    const customerCount = dto.customers?.length ?? 0;
+    const customerNames =
+      dto.customers?.map((c) => c.customerName).join(', ') || '—';
+    const methods = dto.items?.map((i) => i.method).join(', ') || '—';
+    return `ชื่อ: ${dto.name}; programs ${itemCount} รายการ (วิธี: ${methods}); ลูกค้า ${customerCount} ราย (${customerNames})`;
+  }
 
   private installKey(customerName: string, programId: number, method: string) {
     return `${customerName}:${programId}:${method}`;
@@ -49,6 +70,46 @@ export class InstallListsService {
         isInstalled: !!ci.isInstalled,
       })),
     };
+  }
+
+  private async countIncompleteCustomersByList(lists: InstallList[]) {
+    const counts = new Map<number, number>();
+    if (!lists.length) return counts;
+
+    const customerIds = lists.flatMap((list) =>
+      (list.customers ?? []).map((c) => c.id).filter((id): id is number => id != null),
+    );
+
+    const installedByCustomer = new Map<number, number>();
+    if (customerIds.length) {
+      const customerItems = await this.customerItemRepo.find({
+        where: { customerId: In(customerIds), isInstalled: 1 },
+      });
+      for (const ci of customerItems) {
+        installedByCustomer.set(
+          ci.customerId,
+          (installedByCustomer.get(ci.customerId) ?? 0) + 1,
+        );
+      }
+    }
+
+    for (const list of lists) {
+      const itemCount = list.items?.length ?? 0;
+      const customers = list.customers ?? [];
+      if (!itemCount || !customers.length) {
+        counts.set(list.id, 0);
+        continue;
+      }
+
+      let incomplete = 0;
+      for (const customer of customers) {
+        const done = installedByCustomer.get(customer.id!) ?? 0;
+        if (done < itemCount) incomplete++;
+      }
+      counts.set(list.id, incomplete);
+    }
+
+    return counts;
   }
 
   async findAll(activeOnly = true, search?: string) {
@@ -86,11 +147,13 @@ export class InstallListsService {
     }
 
     const lists = await qb.getMany();
+    const incompleteCounts = await this.countIncompleteCustomersByList(lists);
 
     return lists.map((list) => ({
       ...list,
       programCount: list.items?.length ?? 0,
       customerCount: list.customers?.length ?? 0,
+      incompleteCustomerCount: incompleteCounts.get(list.id) ?? 0,
       issueCount: list.issues?.length ?? 0,
       issues: undefined,
     }));
@@ -99,7 +162,12 @@ export class InstallListsService {
   async findOne(id: number) {
     const list = await this.listRepo.findOne({
       where: { id },
-      relations: { items: { program: true }, customers: true, issues: { attachments: true } },
+      relations: {
+        items: { program: true },
+        customers: true,
+        documents: true,
+        issues: { attachments: true },
+      },
     });
     if (!list) throw new NotFoundException('ไม่พบ install list');
     list.issues = (list.issues ?? [])
@@ -114,7 +182,15 @@ export class InstallListsService {
       }));
 
     const customerItems = await this.loadCustomerInstalls(id);
-    return this.attachCustomerInstalls(list, customerItems);
+    const enriched = this.attachCustomerInstalls(list, customerItems);
+    const documents = [...(list.documents ?? [])]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map((doc) => ({
+        ...doc,
+        url: documentPublicPath(doc.listId, doc.storedName),
+      }));
+
+    return { ...enriched, documents };
   }
 
   private async snapshotInstallMap(listId: number) {
@@ -167,7 +243,38 @@ export class InstallListsService {
     }
   }
 
+  private async validateProgramItems(
+    listId: number | null,
+    items: CreateInstallListDto['items'],
+  ) {
+    if (!items?.length) return;
+
+    const existing =
+      listId != null
+        ? await this.itemRepo.find({ where: { listId } })
+        : [];
+    const existingKeys = new Set(
+      existing.map((item) => `${item.programId}:${item.method}`),
+    );
+
+    for (const item of items) {
+      const key = `${item.programId}:${item.method}`;
+      if (existingKeys.has(key)) continue;
+
+      const program = await this.programRepo.findOne({
+        where: { id: item.programId },
+      });
+      if (!program || program.isDelete || !program.isActive) {
+        throw new BadRequestException(
+          `ไม่สามารถเพิ่ม program "${program?.name ?? item.programId}" — ยังไม่เปิดใช้งานหรือถูกลบแล้ว`,
+        );
+      }
+    }
+  }
+
   private async saveItems(listId: number, items: CreateInstallListDto['items']) {
+    await this.validateProgramItems(listId, items);
+
     const installMap = await this.snapshotInstallMap(listId);
 
     await this.itemRepo.delete({ listId });
@@ -224,6 +331,7 @@ export class InstallListsService {
       objectId: saved.id,
       objectName: saved.name,
       performedBy,
+      details: this.installListPayloadSummary(dto),
     });
 
     return this.findOne(saved.id);
@@ -231,17 +339,40 @@ export class InstallListsService {
 
   async update(id: number, dto: UpdateInstallListDto, performedBy: string) {
     const list = await this.findOne(id);
+    const beforeName = list.name;
+    const beforeItemCount = list.items?.length ?? 0;
+    const beforeCustomerCount = list.customers?.length ?? 0;
+
     await this.listRepo.update(id, { name: dto.name });
 
     await this.saveItems(id, dto.items);
     await this.saveCustomers(id, dto.customers);
 
+    const parts: string[] = [];
+    if (beforeName !== dto.name) {
+      parts.push(`ชื่อ: ${beforeName} → ${dto.name}`);
+    }
+    const newItemCount = dto.items?.length ?? 0;
+    if (beforeItemCount !== newItemCount) {
+      parts.push(`programs: ${beforeItemCount} → ${newItemCount} รายการ`);
+    }
+    const newCustomerCount = dto.customers?.length ?? 0;
+    if (beforeCustomerCount !== newCustomerCount) {
+      parts.push(`ลูกค้า: ${beforeCustomerCount} → ${newCustomerCount} ราย`);
+    }
+    const newCustomerNames =
+      dto.customers?.map((c) => c.customerName).join(', ') || '—';
+    if (newCustomerCount) {
+      parts.push(`รายชื่อลูกค้า: ${newCustomerNames}`);
+    }
+
     await this.auditService.log({
       action: 'update',
       objectType: 'install_list',
       objectId: list.id,
-      objectName: list.name,
+      objectName: dto.name,
       performedBy,
+      details: parts.length ? parts.join('; ') : this.installListPayloadSummary(dto),
     });
 
     return this.findOne(id);
@@ -255,7 +386,10 @@ export class InstallListsService {
     performedBy: string,
   ) {
     const customer = await this.customerRepo.findOne({ where: { id: customerId, listId } });
-    const item = await this.itemRepo.findOne({ where: { id: itemId, listId } });
+    const item = await this.itemRepo.findOne({
+      where: { id: itemId, listId },
+      relations: { program: true },
+    });
     if (!customer || !item) {
       throw new NotFoundException('ไม่พบลูกค้าหรือ program ใน list นี้');
     }
@@ -273,12 +407,14 @@ export class InstallListsService {
     await this.customerItemRepo.save(record);
 
     const list = await this.listRepo.findOne({ where: { id: listId } });
+    const programLabel = item.program?.name ?? String(item.programId);
     await this.auditService.log({
       action: 'update',
       objectType: 'install_list_customer_item',
       objectId: record.id,
       objectName: `${list?.name ?? listId} / ${customer.customerName}`,
       performedBy,
+      details: `${customer.customerName} — ${programLabel} (${item.method}): ${isInstalled ? 'เลือกติดตั้ง' : 'ยกเลิกการติดตั้ง'}`,
     });
 
     return {
@@ -378,8 +514,66 @@ export class InstallListsService {
       objectId: list.id,
       objectName: list.name,
       performedBy,
+      details: auditDeletedSummary('install list', list.name),
     });
 
     return { ok: true };
+  }
+
+  async uploadDocuments(
+    listId: number,
+    files: Express.Multer.File[],
+    performedBy: string,
+  ) {
+    if (!files?.length) {
+      throw new BadRequestException('ไม่พบไฟล์ที่อัปโหลด');
+    }
+
+    const list = await this.listRepo.findOne({ where: { id: listId } });
+    if (!list) throw new NotFoundException('ไม่พบ install list');
+
+    for (const file of files) {
+      const stored = await storeListDocument(listId, file);
+      await this.documentRepo.save(
+        this.documentRepo.create({
+          listId,
+          ...stored,
+          uploadedBy: performedBy,
+        }),
+      );
+    }
+
+    await this.auditService.log({
+      action: 'update',
+      objectType: 'install_list_document',
+      objectId: listId,
+      objectName: list.name,
+      performedBy,
+      details: `อัปโหลด ${files.length} ไฟล์: ${files.map((f) => f.originalname).join(', ')}`,
+    });
+
+    return this.findOne(listId);
+  }
+
+  async deleteDocument(listId: number, documentId: number, performedBy: string) {
+    const doc = await this.documentRepo.findOne({
+      where: { id: documentId, listId },
+    });
+    if (!doc) throw new NotFoundException('ไม่พบเอกสาร');
+
+    const list = await this.listRepo.findOne({ where: { id: listId } });
+    await removeListDocumentFile(listId, doc.storedName);
+    await this.documentRepo.delete(documentId);
+
+    await this.auditService.log({
+      action: 'delete',
+      objectType: 'install_list_document',
+      objectId: documentId,
+      objectName: list?.name ?? String(listId),
+      performedBy,
+      details: auditDeletedSummary('เอกสาร', doc.originalName),
+    });
+
+    return this.findOne(listId);
   }
 }

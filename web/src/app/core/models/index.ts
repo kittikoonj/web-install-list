@@ -24,9 +24,32 @@ export interface AuthResponse {
 
 export type InstallMethod = 'offline' | 'docker' | 'online';
 
+export interface SettingOs {
+  id: number;
+  name: string;
+  sortOrder?: number;
+  createdAt?: string;
+}
+
+export interface SettingProgramName {
+  id: number;
+  name: string;
+  sortOrder?: number;
+  createdAt?: string;
+}
+
+export interface SettingCustomerName {
+  id: number;
+  name: string;
+  sortOrder?: number;
+  createdAt?: string;
+}
+
 export interface Program {
   id: number;
   name: string;
+  osId?: number | null;
+  os?: SettingOs | null;
   version?: string | null;
   githubUrl: string;
   methods: InstallMethod[];
@@ -38,6 +61,7 @@ export interface Program {
   createdAt: string;
   updatedAt: string;
   isDelete: number;
+  isActive: number;
   deletedBy?: string;
   deletedAt?: string;
 }
@@ -65,6 +89,18 @@ export interface InstallListCustomer {
   testCaseUrl?: string | null;
 }
 
+export interface InstallListDocument {
+  id: number;
+  listId: number;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  fileSize: number;
+  uploadedBy?: string | null;
+  createdAt: string;
+  url: string;
+}
+
 export interface InstallList {
   id: number;
   name: string;
@@ -77,9 +113,11 @@ export interface InstallList {
   items?: InstallListItem[];
   customers?: InstallListCustomer[];
   customerInstalls?: CustomerInstall[];
+  documents?: InstallListDocument[];
   issues?: Issue[];
   programCount?: number;
   customerCount?: number;
+  incompleteCustomerCount?: number;
   issueCount?: number;
 }
 
@@ -101,6 +139,7 @@ export interface Issue {
   id: number;
   installListId: number;
   installList?: InstallList;
+  customerName?: string | null;
   title: string;
   description?: string | null;
   status: IssueStatus;
@@ -122,21 +161,56 @@ export interface IssueComment {
   createdAt: string;
 }
 
+export interface DashboardIncompleteList {
+  id: number;
+  name: string;
+  incompleteCustomerCount: number;
+  customerCount: number;
+  progressPercent: number;
+  updatedAt: string;
+}
+
 export interface DashboardStats {
   totalLists: number;
   activeLists: number;
   totalPrograms: number;
+  activePrograms: number;
+  inactivePrograms: number;
   totalIssues: number;
   openIssues: number;
+  inProgressIssues: number;
+  resolvedIssues: number;
+  closedIssues: number;
   totalUsers: number;
+  totalCustomers: number;
+  totalIncompleteCustomers: number;
+  listsWithIncomplete: number;
+  overallProgressPercent: number;
+  completedCustomers: number;
+  incompleteLists: DashboardIncompleteList[];
   recentLists: { id: number; name: string; updatedAt: string }[];
-  recentIssues: {
-    id: number;
-    title: string;
-    status: string;
-    installListName?: string;
-    updatedAt: string;
-  }[];
+  recentIssues: DashboardIssueSummary[];
+  pendingIssues: DashboardIssueSummary[];
+  recentAuditLogs: DashboardAuditEntry[];
+}
+
+export interface DashboardIssueSummary {
+  id: number;
+  title: string;
+  status: string;
+  customerName?: string | null;
+  installListName?: string;
+  updatedAt: string;
+}
+
+export interface DashboardAuditEntry {
+  id: number;
+  action: 'create' | 'update' | 'delete';
+  objectType: string;
+  objectName?: string | null;
+  details?: string | null;
+  performedBy?: string | null;
+  performedAt: string;
 }
 
 export interface AuditLog {
@@ -145,6 +219,7 @@ export interface AuditLog {
   objectType: string;
   objectId?: number;
   objectName?: string;
+  details?: string;
   performedBy?: string;
   performedAt: string;
 }

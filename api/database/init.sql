@@ -31,9 +31,31 @@ CREATE TABLE IF NOT EXISTS role_permissions (
   UNIQUE KEY uk_role_menu (role_id, menu_key)
 );
 
+CREATE TABLE IF NOT EXISTS setting_os (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  sort_order INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS setting_program_names (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  sort_order INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS setting_customer_names (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(200) NOT NULL UNIQUE,
+  sort_order INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS programs (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(100) NOT NULL,
+  os_id INT NULL,
   version VARCHAR(50),
   github_url VARCHAR(500) NOT NULL,
   methods JSON NOT NULL,
@@ -45,8 +67,10 @@ CREATE TABLE IF NOT EXISTS programs (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_delete TINYINT DEFAULT 0,
+  is_active TINYINT DEFAULT 1,
   deleted_by VARCHAR(100),
-  deleted_at DATETIME
+  deleted_at DATETIME,
+  FOREIGN KEY (os_id) REFERENCES setting_os(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS install_lists (
@@ -89,9 +113,22 @@ CREATE TABLE IF NOT EXISTS install_list_customer_items (
   FOREIGN KEY (item_id) REFERENCES install_list_items(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS install_list_documents (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  list_id INT NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  stored_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  file_size INT DEFAULT 0,
+  uploaded_by VARCHAR(100),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (list_id) REFERENCES install_lists(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS issues (
   id INT PRIMARY KEY AUTO_INCREMENT,
   install_list_id INT NOT NULL,
+  customer_name VARCHAR(200),
   title VARCHAR(200) NOT NULL,
   description TEXT,
   status ENUM('open','in_progress','resolved','closed') DEFAULT 'open',
@@ -131,6 +168,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   object_type VARCHAR(50) NOT NULL,
   object_id INT,
   object_name VARCHAR(200),
+  details TEXT,
   performed_by VARCHAR(100),
   performed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -176,6 +214,13 @@ INSERT INTO role_permissions (role_id, menu_key, can_access) VALUES
   (4, 'audit_log', 0),
   (4, 'settings', 0)
 ON DUPLICATE KEY UPDATE can_access = VALUES(can_access);
+
+INSERT INTO setting_os (name, sort_order) VALUES
+  ('Windows', 1),
+  ('Linux', 2),
+  ('macOS', 3),
+  ('Ubuntu', 4)
+ON DUPLICATE KEY UPDATE sort_order = VALUES(sort_order);
 
 -- Default admin: admin@example.com / admin123
 INSERT INTO users (name, email, password, role_id, status) VALUES

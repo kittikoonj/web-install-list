@@ -18,8 +18,9 @@ test.describe('Issues', () => {
     await expect(page.locator('.data-table')).toBeVisible();
   });
 
-  test('can open create issue modal', async ({ page }) => {
+  test('can open create issue panel', async ({ page }) => {
     await page.getByRole('button', { name: /เพิ่ม Issue/ }).click();
-    await expect(page.getByRole('heading', { name: /Issue/ })).toBeVisible();
+    await expect(page.locator('.issue-panel')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /เพิ่ม Issue/ })).toBeVisible();
   });
 });

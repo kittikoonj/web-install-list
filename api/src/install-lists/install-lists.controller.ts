@@ -11,8 +11,12 @@ import {
   UseGuards,
   ParseIntPipe,
   Res,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { InstallListsService } from './install-lists.service';
 import { CreateInstallListDto, UpdateInstallListDto, CloneInstallListDto, ToggleItemInstalledDto } from './dto/install-list.dto';
 import { SessionGuard } from '../common/guards/session.guard';
@@ -86,6 +90,30 @@ export class InstallListsController {
       !!dto.isInstalled,
       user.name,
     );
+  }
+
+  @Post(':id/documents')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: memoryStorage(),
+      limits: { fileSize: 20 * 1024 * 1024 },
+    }),
+  )
+  uploadDocuments(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFiles() files: Express.Multer.File[],
+    @CurrentUser() user: User,
+  ) {
+    return this.installListsService.uploadDocuments(id, files, user.name);
+  }
+
+  @Delete(':id/documents/:documentId')
+  deleteDocument(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('documentId', ParseIntPipe) documentId: number,
+    @CurrentUser() user: User,
+  ) {
+    return this.installListsService.deleteDocument(id, documentId, user.name);
   }
 
   @Delete(':id')

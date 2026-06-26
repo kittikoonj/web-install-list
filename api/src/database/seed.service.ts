@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '../entities/role.entity';
 import { RolePermission } from '../entities/role-permission.entity';
 import { User } from '../entities/user.entity';
+import { SettingOs } from '../entities/setting-os.entity';
 import { MENU_KEYS } from '../common/constants';
 
 const DEFAULT_PERMISSIONS: Record<string, Record<string, boolean>> = {
@@ -50,11 +51,14 @@ export class SeedService implements OnModuleInit {
     private readonly permRepo: Repository<RolePermission>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(SettingOs)
+    private readonly osRepo: Repository<SettingOs>,
   ) {}
 
   async onModuleInit() {
     await this.seedRoles();
     await this.seedPermissions();
+    await this.seedDefaultOs();
     await this.seedAdminUser();
     await this.seedViewerUser();
     await this.seedE2EUser();
@@ -97,6 +101,18 @@ export class SeedService implements OnModuleInit {
             }),
           );
         }
+      }
+    }
+  }
+
+  private async seedDefaultOs() {
+    const defaults = ['Windows', 'Linux', 'macOS', 'Ubuntu'];
+    for (const [index, name] of defaults.entries()) {
+      const existing = await this.osRepo.findOne({ where: { name } });
+      if (!existing) {
+        await this.osRepo.save(
+          this.osRepo.create({ name, sortOrder: index + 1 }),
+        );
       }
     }
   }

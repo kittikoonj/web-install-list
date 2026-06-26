@@ -2,6 +2,7 @@ import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Issue, IssueAttachment, IssueComment, IssueStatus, InstallList } from '../../core/models';
@@ -13,7 +14,7 @@ import {
 
 @Component({
   selector: 'app-issues',
-  imports: [FormsModule, DatePipe, ImageViewerComponent],
+  imports: [FormsModule, DatePipe, ImageViewerComponent, NgSelectModule],
   templateUrl: './issues.component.html',
   styleUrl: './issues.component.scss',
 })
@@ -30,17 +31,19 @@ export class IssuesComponent implements OnInit, OnDestroy {
   highlightIssueId: number | null = null;
   commentText = '';
   issueComments = signal<IssueComment[]>([]);
-  showModal = signal(false);
+  showPanel = signal(false);
   editing = signal<Issue | null>(null);
   saving = signal(false);
   uploading = signal(false);
   pendingFiles = signal<File[]>([]);
   currentAttachments = signal<IssueAttachment[]>([]);
   viewingImage = signal<ImageViewItem | null>(null);
+  customerOptions = signal<string[]>([]);
   private blobUrls: string[] = [];
 
   form = {
     installListId: 0,
+    customerName: null as string | null,
     title: '',
     description: '',
     status: 'open' as IssueStatus,
@@ -56,13 +59,17 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadInstallLists();
+    this.loadMasterCustomerNames();
     this.route.queryParamMap.subscribe((params) => {
       this.filterListId = params.get('installListId') ?? '';
+      this.filterStatus = params.get('status') ?? '';
       const issueId = params.get('issueId');
       this.highlightIssueId = issueId ? +issueId : null;
       this.load();
       if (params.get('create') === '1' && this.auth.canWrite()) {
         this.openCreate();
+      } else if (issueId && this.auth.canWrite()) {
+        this.api.getIssue(+issueId).subscribe((full) => this.openEdit(full));
       }
     });
   }
@@ -89,21 +96,33 @@ export class IssuesComponent implements OnInit, OnDestroy {
       .subscribe((data) => this.issues.set(data));
   }
 
+  closePanel() {
+    this.showPanel.set(false);
+    this.editing.set(null);
+    this.pendingFiles.set([]);
+    this.currentAttachments.set([]);
+    this.issueComments.set([]);
+    this.commentText = '';
+  }
+
   openCreate() {
     this.editing.set(null);
     this.pendingFiles.set([]);
     this.currentAttachments.set([]);
     this.issueComments.set([]);
     this.commentText = '';
+    const listId = this.filterListId
+      ? +this.filterListId
+      : (this.installLists()[0]?.id ?? 0);
     this.form = {
-      installListId: this.filterListId
-        ? +this.filterListId
-        : (this.installLists()[0]?.id ?? 0),
+      installListId: listId,
+      customerName: null,
       title: '',
       description: '',
       status: 'open',
     };
-    this.showModal.set(true);
+    this.loadCustomerOptions(listId);
+    this.showPanel.set(true);
   }
 
   openEdit(issue: Issue) {
@@ -114,11 +133,27 @@ export class IssuesComponent implements OnInit, OnDestroy {
     this.commentText = '';
     this.form = {
       installListId: issue.installListId,
+      customerName: issue.customerName ?? null,
       title: issue.title,
       description: issue.description ?? '',
       status: issue.status,
     };
-    this.showModal.set(true);
+    this.loadCustomerOptions(issue.installListId);
+    this.showPanel.set(true);
+  }
+
+  loadMasterCustomerNames() {
+    this.api.lookupCustomerNames().subscribe((items) => {
+      this.customerOptions.set(items.map((item) => item.name));
+    });
+  }
+
+  onInstallListChange() {
+    this.form.customerName = null;
+  }
+
+  loadCustomerOptions(_listId: number) {
+    this.loadMasterCustomerNames();
   }
 
   onFilesSelected(event: Event) {
@@ -146,8 +181,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
   private finishSave() {
     this.saving.set(false);
     this.uploading.set(false);
-    this.showModal.set(false);
-    this.pendingFiles.set([]);
+    this.closePanel();
     this.load();
   }
 
@@ -173,6 +207,7 @@ export class IssuesComponent implements OnInit, OnDestroy {
 
     const payload = {
       installListId: this.form.installListId,
+      customerName: this.form.customerName?.trim() || undefined,
       title: this.form.title.trim(),
       description: this.form.description.trim() || undefined,
       status: this.form.status,

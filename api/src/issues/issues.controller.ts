@@ -64,8 +64,9 @@ export class IssuesController {
   uploadAttachments(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFiles() files: Express.Multer.File[],
+    @CurrentUser() user: User,
   ) {
-    return this.issuesService.uploadAttachments(id, files);
+    return this.issuesService.uploadAttachments(id, files, user.name);
   }
 
   @Post(':id/comments')
@@ -90,8 +91,9 @@ export class IssuesController {
   deleteAttachment(
     @Param('id', ParseIntPipe) id: number,
     @Param('attachmentId', ParseIntPipe) attachmentId: number,
+    @CurrentUser() user: User,
   ) {
-    return this.issuesService.deleteAttachment(id, attachmentId);
+    return this.issuesService.deleteAttachment(id, attachmentId, user.name);
   }
 
   @Delete(':id')

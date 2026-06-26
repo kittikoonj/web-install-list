@@ -3,7 +3,7 @@
 </div>
 
 @if (settings(); as s) {
-  <div class="card settings-card">
+  <div class="card app-settings-card">
     <div class="setting-row">
       <label>ชื่อบริษัท</label>
       <span>{{ s['companyName'] }}</span>
@@ -16,8 +16,148 @@
       <label>Session Timeout (hours)</label>
       <span>{{ s['sessionTimeout'] }}</span>
     </div>
-    <p class="hint">การตั้งค่าเพิ่มเติมสามารถขยายได้ในอนาคต</p>
   </div>
-} @else {
-  <div class="empty-state">กำลังโหลด...</div>
 }
+
+<div class="card master-data-card">
+  <div class="tabs">
+    <button type="button" [class.active]="activeTab() === 'os'" (click)="setTab('os')">
+      OS
+    </button>
+    <button
+      type="button"
+      [class.active]="activeTab() === 'programNames'"
+      (click)="setTab('programNames')"
+    >
+      ชื่อ Program
+    </button>
+    <button
+      type="button"
+      [class.active]="activeTab() === 'customerNames'"
+      (click)="setTab('customerNames')"
+    >
+      ชื่อลูกค้า
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="error-banner">{{ error() }}</div>
+  }
+
+  @if (activeTab() === 'os') {
+    <div class="master-section">
+      <p class="section-desc">รายการ OS สำหรับเลือกใน Program (เพิ่ม/ลบได้ที่นี่)</p>
+      @if (canWrite()) {
+        <div class="add-row">
+          <input
+            type="text"
+            [(ngModel)]="newOsName"
+            placeholder="เช่น Windows, Linux, Ubuntu"
+            (keyup.enter)="addOs()"
+          />
+          <button class="btn btn-primary" (click)="addOs()" [disabled]="saving() || !newOsName.trim()">
+            <i class="ti ti-plus"></i> เพิ่ม
+          </button>
+        </div>
+      }
+      <ul class="master-list">
+        @for (item of osList(); track item.id) {
+          <li>
+            <span>{{ item.name }}</span>
+            @if (canWrite()) {
+              <button type="button" class="icon-btn danger" (click)="deleteOs(item)" title="ลบ">
+                <i class="ti ti-trash"></i>
+              </button>
+            }
+          </li>
+        } @empty {
+          <li class="empty-item">ยังไม่มี OS</li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (activeTab() === 'programNames') {
+    <div class="master-section">
+      <p class="section-desc">รายชื่อ program มาตรฐานสำหรับเลือกตอนสร้าง Program</p>
+      @if (canWrite()) {
+        <div class="add-row">
+          <input
+            type="text"
+            [(ngModel)]="newProgramName"
+            placeholder="เช่น MariaDB, Nginx, Redis"
+            (keyup.enter)="addProgramName()"
+          />
+          <button
+            class="btn btn-primary"
+            (click)="addProgramName()"
+            [disabled]="saving() || !newProgramName.trim()"
+          >
+            <i class="ti ti-plus"></i> เพิ่ม
+          </button>
+        </div>
+      }
+      <ul class="master-list">
+        @for (item of programNames(); track item.id) {
+          <li>
+            <span>{{ item.name }}</span>
+            @if (canWrite()) {
+              <button
+                type="button"
+                class="icon-btn danger"
+                (click)="deleteProgramName(item)"
+                title="ลบ"
+              >
+                <i class="ti ti-trash"></i>
+              </button>
+            }
+          </li>
+        } @empty {
+          <li class="empty-item">ยังไม่มีชื่อ program</li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (activeTab() === 'customerNames') {
+    <div class="master-section">
+      <p class="section-desc">รายชื่อลูกค้า/Site มาตรฐานสำหรับเลือกใน Install List และ Issue</p>
+      @if (canWrite()) {
+        <div class="add-row">
+          <input
+            type="text"
+            [(ngModel)]="newCustomerName"
+            placeholder="เช่น ACME Corp, Site Bangkok"
+            (keyup.enter)="addCustomerName()"
+          />
+          <button
+            class="btn btn-primary"
+            (click)="addCustomerName()"
+            [disabled]="saving() || !newCustomerName.trim()"
+          >
+            <i class="ti ti-plus"></i> เพิ่ม
+          </button>
+        </div>
+      }
+      <ul class="master-list">
+        @for (item of customerNames(); track item.id) {
+          <li>
+            <span>{{ item.name }}</span>
+            @if (canWrite()) {
+              <button
+                type="button"
+                class="icon-btn danger"
+                (click)="deleteCustomerName(item)"
+                title="ลบ"
+              >
+                <i class="ti ti-trash"></i>
+              </button>
+            }
+          </li>
+        } @empty {
+          <li class="empty-item">ยังไม่มีชื่อลูกค้า</li>
+        }
+      </ul>
+    </div>
+  }
+</div>

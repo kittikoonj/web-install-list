@@ -27,6 +27,24 @@ export class AuditLogComponent implements OnInit {
     delete: 'ลบ',
   };
 
+  readonly objectTypeLabels: Record<string, string> = {
+    program: 'Program',
+    install_list: 'Install List',
+    install_list_customer_item: 'เลือกติดตั้ง',
+    install_list_document: 'เอกสาร Install List',
+    issue: 'Issue',
+    issue_attachment: 'ไฟล์แนบ Issue',
+    issue_comment: 'ความคิดเห็น Issue',
+    setting_os: 'ตั้งค่า OS',
+    setting_program_name: 'ตั้งค่าชื่อ Program',
+    setting_customer_name: 'ตั้งค่าชื่อลูกค้า',
+    user: 'ผู้ใช้',
+  };
+
+  objectTypeLabel(type: string): string {
+    return this.objectTypeLabels[type] ?? type;
+  }
+
   ngOnInit() {
     this.load();
   }

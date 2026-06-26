@@ -7,9 +7,9 @@
   <input type="date" [(ngModel)]="filters.to" />
   <select [(ngModel)]="filters.action">
     <option value="">ทุก action</option>
-    <option value="create">create</option>
-    <option value="update">update</option>
-    <option value="delete">delete</option>
+    <option value="create">สร้าง</option>
+    <option value="update">แก้ไข</option>
+    <option value="delete">ลบ</option>
   </select>
   <input type="text" placeholder="โดย user..." [(ngModel)]="filters.performedBy" />
   <button class="btn btn-primary" (click)="load()">Filter</button>
@@ -24,6 +24,7 @@
         <th>Action</th>
         <th>Object</th>
         <th>ชื่อ</th>
+        <th>รายละเอียด</th>
         <th>โดย</th>
       </tr>
     </thead>
@@ -36,12 +37,13 @@
               {{ actionLabels[log.action] || log.action }}
             </span>
           </td>
-          <td>{{ log.objectType }}</td>
+          <td>{{ objectTypeLabel(log.objectType) }}</td>
           <td>{{ log.objectName }}</td>
+          <td class="details-cell">{{ log.details || '—' }}</td>
           <td>{{ log.performedBy }}</td>
         </tr>
       } @empty {
-        <tr><td colspan="5" class="empty-state">ไม่มี audit log</td></tr>
+        <tr><td colspan="6" class="empty-state">ไม่มี audit log</td></tr>
       }
     </tbody>
   </table>

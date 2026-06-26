@@ -13,10 +13,37 @@ import { CreateIssueDto, UpdateIssueDto } from './dto/issue.dto';
 import { CreateIssueCommentDto } from './dto/issue-comment.dto';
 import { AuditService } from '../common/audit.service';
 import {
+  auditChanges,
+  auditCreatedSummary,
+  auditDeletedSummary,
+} from '../common/audit.util';
+import {
   removeStoredFile,
   storeIssueAttachment,
   withAttachmentUrls,
 } from './issue-upload.util';
+
+const ISSUE_STATUS_LABELS: Record<string, string> = {
+  open: 'เปิด',
+  in_progress: 'กำลังดำเนินการ',
+  resolved: 'แก้ไขแล้ว',
+  closed: 'ปิด',
+};
+
+const ISSUE_LABELS: Record<string, string> = {
+  title: 'หัวข้อ',
+  description: 'รายละเอียด',
+  status: 'สถานะ',
+  customerName: 'ลูกค้า',
+  installListId: 'Install List',
+};
+
+function formatIssueStatus(status: unknown): unknown {
+  if (typeof status === 'string') {
+    return ISSUE_STATUS_LABELS[status] ?? status;
+  }
+  return status;
+}
 
 @Injectable()
 export class IssuesService {
@@ -63,6 +90,7 @@ export class IssuesService {
         where: [
           { ...where, title: Like(term) },
           { ...where, description: Like(term) },
+          { ...where, customerName: Like(term) },
         ],
         relations: { installList: true, attachments: true, comments: true },
         order: { updatedAt: 'DESC' },
@@ -111,6 +139,15 @@ export class IssuesService {
       objectId: saved.id,
       objectName: saved.title,
       performedBy,
+      details: auditCreatedSummary(
+        {
+          title: saved.title,
+          status: formatIssueStatus(saved.status),
+          customerName: saved.customerName,
+          description: saved.description,
+        },
+        ISSUE_LABELS,
+      ),
     });
 
     return this.findOne(saved.id);
@@ -120,8 +157,25 @@ export class IssuesService {
     const issue = await this.issueRepo.findOne({ where: { id } });
     if (!issue) throw new NotFoundException('ไม่พบ issue');
     if (dto.installListId) await this.ensureInstallList(dto.installListId);
+
+    const before = {
+      title: issue.title,
+      description: issue.description,
+      status: formatIssueStatus(issue.status),
+      customerName: issue.customerName,
+      installListId: issue.installListId,
+    };
+
     Object.assign(issue, dto);
     const saved = await this.issueRepo.save(issue);
+
+    const after = {
+      title: saved.title,
+      description: saved.description,
+      status: formatIssueStatus(saved.status),
+      customerName: saved.customerName,
+      installListId: saved.installListId,
+    };
 
     await this.auditService.log({
       action: 'update',
@@ -129,17 +183,22 @@ export class IssuesService {
       objectId: saved.id,
       objectName: saved.title,
       performedBy,
+      details: auditChanges(before, after, ISSUE_LABELS),
     });
 
     return this.findOne(saved.id);
   }
 
-  async uploadAttachments(id: number, files: Express.Multer.File[]) {
+  async uploadAttachments(
+    id: number,
+    files: Express.Multer.File[],
+    performedBy: string,
+  ) {
     if (!files?.length) {
       throw new BadRequestException('ไม่พบไฟล์ที่อัปโหลด');
     }
 
-    await this.findOne(id);
+    const issue = await this.findOne(id);
     const saved: IssueAttachment[] = [];
 
     for (const file of files) {
@@ -153,29 +212,65 @@ export class IssuesService {
       saved.push(attachment);
     }
 
+    await this.auditService.log({
+      action: 'update',
+      objectType: 'issue_attachment',
+      objectId: id,
+      objectName: issue.title,
+      performedBy,
+      details: `อัปโหลด ${files.length} ไฟล์: ${files.map((f) => f.originalname).join(', ')}`,
+    });
+
     return this.findOne(id);
   }
 
-  async deleteAttachment(issueId: number, attachmentId: number) {
+  async deleteAttachment(
+    issueId: number,
+    attachmentId: number,
+    performedBy: string,
+  ) {
     const attachment = await this.attachmentRepo.findOne({
       where: { id: attachmentId, issueId },
     });
     if (!attachment) throw new NotFoundException('ไม่พบไฟล์แนบ');
 
+    const issue = await this.findOne(issueId);
     await removeStoredFile(issueId, attachment.storedName);
     await this.attachmentRepo.delete(attachmentId);
+
+    await this.auditService.log({
+      action: 'delete',
+      objectType: 'issue_attachment',
+      objectId: attachmentId,
+      objectName: issue.title,
+      performedBy,
+      details: auditDeletedSummary('ไฟล์แนบ', attachment.originalName),
+    });
+
     return this.findOne(issueId);
   }
 
   async addComment(issueId: number, dto: CreateIssueCommentDto, performedBy: string) {
-    await this.findOne(issueId);
+    const issue = await this.findOne(issueId);
+    const body = dto.body.trim();
     await this.commentRepo.save(
       this.commentRepo.create({
         issueId,
-        body: dto.body.trim(),
+        body,
         createdBy: performedBy,
       }),
     );
+
+    const excerpt = body.length > 120 ? `${body.slice(0, 120)}…` : body;
+    await this.auditService.log({
+      action: 'create',
+      objectType: 'issue_comment',
+      objectId: issueId,
+      objectName: issue.title,
+      performedBy,
+      details: `เพิ่มความคิดเห็น: ${excerpt}`,
+    });
+
     return this.findOne(issueId);
   }
 
@@ -193,6 +288,7 @@ export class IssuesService {
       objectId: issue.id,
       objectName: issue.title,
       performedBy,
+      details: auditDeletedSummary('issue', issue.title),
     });
 
     return { ok: true };

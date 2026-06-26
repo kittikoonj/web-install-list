@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Program, InstallList, InstallListItem, CustomerInstall, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats } from '../models';
+import { Program, InstallList, InstallListItem, InstallListDocument, CustomerInstall, UserRecord, AuditLog, PermissionMatrix, Role, Issue, DashboardStats, SettingOs, SettingProgramName, SettingCustomerName } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -42,6 +42,14 @@ export class ApiService {
 
   deleteProgram(id: number) {
     return this.http.delete(`${this.base}/programs/${id}`, this.opts);
+  }
+
+  toggleProgramActive(id: number, isActive: boolean) {
+    return this.http.patch<Program>(
+      `${this.base}/programs/${id}/active`,
+      { isActive },
+      this.opts,
+    );
   }
 
   // Install Lists
@@ -107,6 +115,25 @@ export class ApiService {
     );
   }
 
+  uploadInstallListDocuments(listId: number, files: File[]) {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    return this.http.post<InstallList>(
+      `${this.base}/install-lists/${listId}/documents`,
+      formData,
+      this.opts,
+    );
+  }
+
+  deleteInstallListDocument(listId: number, documentId: number) {
+    return this.http.delete<InstallList>(
+      `${this.base}/install-lists/${listId}/documents/${documentId}`,
+      this.opts,
+    );
+  }
+
   // Issues
   getIssues(search?: string, installListId?: number, includeDeleted = false, status?: string) {
     let params = new HttpParams();
@@ -125,6 +152,7 @@ export class ApiService {
     installListId: number;
     title: string;
     description?: string;
+    customerName?: string;
     status?: string;
   }) {
     return this.http.post<Issue>(`${this.base}/issues`, data, this.opts);
@@ -218,5 +246,67 @@ export class ApiService {
   // Settings
   getSettings() {
     return this.http.get<Record<string, unknown>>(`${this.base}/settings`, this.opts);
+  }
+
+  getSettingOs() {
+    return this.http.get<SettingOs[]>(`${this.base}/settings/os`, this.opts);
+  }
+
+  createSettingOs(name: string) {
+    return this.http.post<SettingOs>(`${this.base}/settings/os`, { name }, this.opts);
+  }
+
+  deleteSettingOs(id: number) {
+    return this.http.delete(`${this.base}/settings/os/${id}`, this.opts);
+  }
+
+  getSettingProgramNames() {
+    return this.http.get<SettingProgramName[]>(`${this.base}/settings/program-names`, this.opts);
+  }
+
+  createSettingProgramName(name: string) {
+    return this.http.post<SettingProgramName>(
+      `${this.base}/settings/program-names`,
+      { name },
+      this.opts,
+    );
+  }
+
+  deleteSettingProgramName(id: number) {
+    return this.http.delete(`${this.base}/settings/program-names/${id}`, this.opts);
+  }
+
+  getSettingCustomerNames() {
+    return this.http.get<SettingCustomerName[]>(`${this.base}/settings/customer-names`, this.opts);
+  }
+
+  createSettingCustomerName(name: string) {
+    return this.http.post<SettingCustomerName>(
+      `${this.base}/settings/customer-names`,
+      { name },
+      this.opts,
+    );
+  }
+
+  deleteSettingCustomerName(id: number) {
+    return this.http.delete(`${this.base}/settings/customer-names/${id}`, this.opts);
+  }
+
+  lookupOs() {
+    return this.http.get<SettingOs[]>(`${this.base}/settings/lookup/os`, this.opts);
+  }
+
+  lookupProgramNames() {
+    return this.http.get<SettingProgramName[]>(
+      `${this.base}/settings/lookup/program-names`,
+      this.opts,
+    );
+  }
+
+  lookupCustomerNames() {
+    return this.http.get<SettingCustomerName[]>(
+      `${this.base}/settings/lookup/customer-names`,
+      this.opts,
+    );
   }
 }

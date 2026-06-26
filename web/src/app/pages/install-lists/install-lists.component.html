@@ -1,7 +1,9 @@
+<div class="install-lists-page" [class.panel-open]="showSidePanel()">
+  <div class="install-lists-main">
 <div class="page-header">
   <h1>Install Lists</h1>
   @if (canWrite()) {
-    <button class="btn btn-primary" (click)="openCreate()">
+    <button class="btn btn-primary" appTooltip="สร้าง Install List ใหม่" (click)="openCreate()">
       <i class="ti ti-plus"></i> Create List
     </button>
   }
@@ -26,12 +28,11 @@
     <thead>
       <tr>
         <th>ชื่อ List</th>
-        <th>Programs</th>
+        <th>Prog.</th>
         <th>ลูกค้า</th>
-        <th>Issues</th>
-        <th>ผู้สร้าง</th>
-        <th>วันที่สร้าง</th>
-        <th>แก้ไขล่าสุด</th>
+        <th>ไม่เสร็จ</th>
+        <th>Issue</th>
+        <th>อัปเดต</th>
         <th></th>
       </tr>
     </thead>
@@ -55,47 +56,83 @@
           </td>
           <td>{{ list.programCount ?? list.items?.length ?? 0 }}</td>
           <td>{{ list.customerCount ?? list.customers?.length ?? 0 }}</td>
+          <td>
+            @if ((list.incompleteCustomerCount ?? 0) > 0) {
+              <span class="incomplete-badge">{{ list.incompleteCustomerCount }}</span>
+            } @else {
+              <span class="text-muted">0</span>
+            }
+          </td>
           <td>{{ list.issueCount ?? 0 }}</td>
-          <td>{{ list.createdBy }}</td>
-          <td>{{ list.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td>{{ list.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="date-cell">{{ list.updatedAt | date:'dd/MM/yy HH:mm' }}</td>
           <td class="actions">
+            @if (canWrite()) {
+              <button
+                class="btn btn-sm"
+                appTooltip="เพิ่มลูกค้า"
+                (click)="$event.stopPropagation(); openCustomerPanel(list, $event)"
+              >
+                <i class="ti ti-user-plus"></i>
+              </button>
+            }
             @if (canViewIssues() && canWrite()) {
               <button
                 class="btn btn-sm btn-issues"
-                (click)="$event.stopPropagation(); createIssue(list, $event)"
+                appTooltip="เพิ่ม Issue"
+                (click)="$event.stopPropagation(); openIssuePanel(list, $event)"
               >
-                <i class="ti ti-plus"></i> Issue
+                <i class="ti ti-plus"></i>
               </button>
             }
             @if (canViewIssues() && (list.issueCount ?? 0) > 0) {
               <button
                 class="btn btn-sm btn-issues"
+                appTooltip="ดู Issues"
                 (click)="$event.stopPropagation(); viewIssues(list)"
               >
-                <i class="ti ti-bug"></i> Issues
+                <i class="ti ti-bug"></i>
               </button>
             }
             @if (canWrite()) {
-              <button class="btn btn-sm" (click)="$event.stopPropagation(); openEdit(list)">Edit List</button>
+              <button
+                class="btn btn-sm"
+                appTooltip="แก้ไข List"
+                (click)="$event.stopPropagation(); openEdit(list)"
+              >
+                <i class="ti ti-pencil"></i>
+              </button>
             }
             @if (!list.isDelete) {
-              <button class="btn btn-sm" (click)="exportList(list, $event, 'csv')">Export</button>
+              <button class="btn btn-sm" appTooltip="Export CSV" (click)="exportList(list, $event, 'csv')">
+                <i class="ti ti-download"></i>
+              </button>
               @if (canWrite()) {
-                <button class="btn btn-sm" (click)="cloneList(list, $event)">Clone</button>
-                <button class="btn btn-sm btn-danger" (click)="$event.stopPropagation(); deleteList(list)">Del List</button>
+                <button class="btn btn-sm" appTooltip="Clone List" (click)="cloneList(list, $event)">
+                  <i class="ti ti-copy"></i>
+                </button>
+                <button
+                  class="btn btn-sm btn-danger"
+                  appTooltip="ลบ List"
+                  (click)="$event.stopPropagation(); deleteList(list)"
+                >
+                  <i class="ti ti-trash"></i>
+                </button>
               }
             }
           </td>
         </tr>
         @if (isExpanded(list.id)) {
           <tr class="detail-row">
-            <td colspan="8">
+            <td colspan="7">
               @if (loadingDetail() === list.id) {
                 <div class="detail-loading">กำลังโหลด...</div>
               } @else {
+                <div class="list-meta-bar">
+                  สร้างโดย {{ list.createdBy }} · {{ list.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+                <div class="detail-grid">
                 @if (getDetail(list.id).items.length) {
-                  <div class="detail-section">
+                  <div class="detail-section detail-section-compact">
                     <div class="detail-section-title">Programs</div>
                     <div class="program-detail-list">
                       @for (group of groupedPrograms(list.id); track group.program.id) {
@@ -119,8 +156,19 @@
                 }
 
                 @if (sortedCustomers(list.id).length) {
-                  <div class="detail-section">
-                    <div class="detail-section-title">ลูกค้า / Site</div>
+                  <div class="detail-section detail-section-compact">
+                    <div class="detail-section-header">
+                      <div class="detail-section-title">ลูกค้า / Site</div>
+                      @if (canWrite()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          (click)="$event.stopPropagation(); openCustomerPanel(list, $event)"
+                        >
+                          <i class="ti ti-plus"></i> เพิ่มลูกค้า
+                        </button>
+                      }
+                    </div>
                     <div class="customer-site-list">
                       @for (c of sortedCustomers(list.id); track c.id) {
                         <div class="customer-site-card" (click)="$event.stopPropagation()">
@@ -142,6 +190,7 @@
                             }
                           </div>
                           @if (getDetail(list.id).items.length) {
+                            <div class="checklist-label">Programs ที่ติดตั้ง</div>
                             <div class="checklist">
                               @for (item of getDetail(list.id).items; track item.id) {
                                 <label class="checklist-item">
@@ -167,10 +216,92 @@
                       }
                     </div>
                   </div>
+                } @else if (canWrite()) {
+                  <div class="detail-section detail-section-compact">
+                    <div class="detail-section-header">
+                      <div class="detail-section-title">ลูกค้า / Site</div>
+                      <button
+                        type="button"
+                        class="btn btn-sm"
+                        (click)="$event.stopPropagation(); openCustomerPanel(list, $event)"
+                      >
+                        <i class="ti ti-plus"></i> เพิ่มลูกค้า
+                      </button>
+                    </div>
+                    <div class="detail-empty-inline">ยังไม่มีลูกค้า</div>
+                  </div>
                 }
+                </div>
+
+                <div class="detail-section detail-section-compact" (click)="$event.stopPropagation()">
+                  <div class="detail-section-header">
+                    <div class="detail-section-title">Documents</div>
+                    @if (canWrite()) {
+                      <label class="upload-btn btn btn-sm" [class.disabled]="uploadingDocuments() === list.id">
+                        <i class="ti ti-upload"></i>
+                        {{ uploadingDocuments() === list.id ? 'กำลังอัปโหลด...' : 'อัปโหลดเอกสาร' }}
+                        <input
+                          type="file"
+                          multiple
+                          [disabled]="uploadingDocuments() === list.id"
+                          (change)="onDocumentsSelected(list.id, $event)"
+                        />
+                      </label>
+                    }
+                  </div>
+                  @if (sortedDocuments(list.id).length) {
+                    <div class="document-list">
+                      @for (doc of sortedDocuments(list.id); track doc.id) {
+                        <div class="document-item">
+                          @if (isDocumentImage(doc)) {
+                            <div class="document-image">
+                              <img [src]="doc.url" [alt]="doc.originalName" class="document-thumb" />
+                              <button
+                                type="button"
+                                class="btn btn-sm view-btn"
+                                appTooltip="ดูรูป"
+                                (click)="viewDocumentImage(doc, $event)"
+                              >
+                                View
+                              </button>
+                            </div>
+                          } @else {
+                            <a
+                              [href]="doc.url"
+                              target="_blank"
+                              rel="noopener"
+                              class="document-file"
+                              (click)="$event.stopPropagation()"
+                            >
+                              <i class="ti ti-file"></i>
+                              <span class="document-name">{{ doc.originalName }}</span>
+                              <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                            </a>
+                          }
+                          <div class="document-meta">
+                            <span>{{ doc.uploadedBy || '—' }}</span>
+                            <span>{{ doc.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                          </div>
+                          @if (canWrite()) {
+                            <button
+                              type="button"
+                              class="icon-btn remove-att"
+                              appTooltip="ลบเอกสาร"
+                              (click)="deleteDocument(list.id, doc, $event)"
+                            >
+                              <i class="ti ti-trash"></i>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="detail-empty-inline">ยังไม่มีเอกสาร</div>
+                  }
+                </div>
 
                 @if (sortedIssues(list.id).length) {
-                  <div class="detail-section">
+                  <div class="detail-section detail-section-compact">
                     <div class="detail-section-header">
                       <div class="detail-section-title">Issues</div>
                       @if (canViewIssues()) {
@@ -178,9 +309,9 @@
                           <button
                             type="button"
                             class="btn btn-sm"
-                            (click)="$event.stopPropagation(); createIssue(list, $event)"
+                            (click)="$event.stopPropagation(); openIssuePanel(list, $event)"
                           >
-                            <i class="ti ti-plus"></i> สร้าง Issue
+                            <i class="ti ti-plus"></i> เพิ่ม Issue
                           </button>
                         }
                         <button
@@ -228,6 +359,7 @@
                                       <button
                                         type="button"
                                         class="btn btn-sm view-btn"
+                                        appTooltip="ดูรูป"
                                         (click)="viewIssueImage(img, $event)"
                                       >
                                         View
@@ -257,6 +389,7 @@
                                 <button
                                   type="button"
                                   class="btn btn-sm"
+                                  appTooltip="ดู Issue"
                                   (click)="$event.stopPropagation(); viewIssues(list, issue.id)"
                                 >
                                   ดู
@@ -269,9 +402,18 @@
                     </table>
                   </div>
                 } @else if (canViewIssues()) {
-                  <div class="detail-section">
+                  <div class="detail-section detail-section-compact">
                     <div class="detail-section-header">
                       <div class="detail-section-title">Issues</div>
+                      @if (canWrite()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          (click)="$event.stopPropagation(); openIssuePanel(list, $event)"
+                        >
+                          <i class="ti ti-plus"></i> เพิ่ม Issue
+                        </button>
+                      }
                       <button
                         type="button"
                         class="btn btn-sm"
@@ -287,6 +429,7 @@
                 @if (
                   !groupedPrograms(list.id).length &&
                   !sortedCustomers(list.id).length &&
+                  !sortedDocuments(list.id).length &&
                   !sortedIssues(list.id).length &&
                   !canViewIssues()
                 ) {
@@ -297,10 +440,208 @@
           </tr>
         }
       } @empty {
-        <tr><td colspan="8" class="empty-state">ไม่มี install list</td></tr>
+        <tr><td colspan="7" class="empty-state">ไม่มี install list</td></tr>
       }
     </tbody>
   </table>
+</div>
+  </div>
+
+  @if (showSidePanel()) {
+    <aside class="side-panel">
+      <div class="panel-header">
+        <div class="panel-heading">
+          <h2>{{ panelTitle() }}</h2>
+          @if (panelList()) {
+            <p class="panel-subtitle">{{ panelList()!.name }}</p>
+          }
+        </div>
+        <button type="button" class="icon-btn panel-close" appTooltip="ปิด" (click)="closePanel()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+
+      <div class="panel-body">
+        @if (panelMode() === 'customer' && panelCustomer(); as row) {
+          <div class="form-group">
+            <label>ชื่อ Site / ลูกค้า *</label>
+            <ng-select
+              [items]="customerNameOptions()"
+              [ngModel]="row.customerName"
+              (ngModelChange)="updatePanelCustomer({ customerName: $event ?? '' })"
+              [addTag]="true"
+              [searchable]="true"
+              [clearable]="true"
+              placeholder="เลือกหรือพิมพ์ชื่อลูกค้า"
+              notFoundText="พิมพ์แล้ว Enter เพื่อเพิ่ม"
+            />
+          </div>
+          <div class="form-group installer-form-group">
+            <label>ผู้ติดตั้ง *</label>
+            @if (installerUsers().length) {
+              <div class="installer-picker" (click)="$event.stopPropagation()">
+                <button
+                  type="button"
+                  class="installer-trigger"
+                  [class.has-value]="row.installerName"
+                  [class.open]="panelInstallerOpen()"
+                  (click)="togglePanelInstallerPicker($event)"
+                >
+                  <i class="ti ti-user installer-icon"></i>
+                  <span class="installer-label" [class.placeholder]="!row.installerName">
+                    {{ row.installerName || 'เลือกผู้ติดตั้ง' }}
+                  </span>
+                  @if (row.installerName) {
+                    <span
+                      class="installer-clear"
+                      (click)="selectPanelInstaller(null); $event.stopPropagation()"
+                    >
+                      <i class="ti ti-x"></i>
+                    </span>
+                  }
+                  <i class="ti ti-chevron-down installer-chevron"></i>
+                </button>
+                @if (panelInstallerOpen()) {
+                  <div class="installer-dropdown">
+                    <input
+                      type="text"
+                      class="installer-search"
+                      placeholder="ค้นหา..."
+                      [ngModel]="panelInstallerFilter()"
+                      (ngModelChange)="panelInstallerFilter.set($event)"
+                      (click)="$event.stopPropagation()"
+                    />
+                    <ul class="installer-list">
+                      @for (u of filteredPanelInstallers(); track u.id) {
+                        <li>
+                          <button
+                            type="button"
+                            class="installer-option"
+                            [class.selected]="row.installerName === u.name"
+                            (click)="selectPanelInstaller(u.name)"
+                          >
+                            <span class="option-name">{{ u.name }}</span>
+                            @if (u.email) {
+                              <span class="option-email">{{ u.email }}</span>
+                            }
+                          </button>
+                        </li>
+                      } @empty {
+                        <li class="installer-empty-item">ไม่พบ user</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="installer-empty">ไม่พบ user ในระบบ</p>
+            }
+          </div>
+          <div class="form-group">
+            <label>วันที่ติดตั้ง *</label>
+            <input
+              type="date"
+              [ngModel]="row.installedAt"
+              (ngModelChange)="updatePanelCustomer({ installedAt: $event })"
+            />
+          </div>
+          <div class="form-group">
+            <label>Test Case URL</label>
+            <input
+              type="url"
+              [ngModel]="row.testCaseUrl"
+              (ngModelChange)="updatePanelCustomer({ testCaseUrl: $event })"
+              placeholder="https://..."
+            />
+          </div>
+        }
+
+        @if (panelMode() === 'issue' && panelList(); as list) {
+          <div class="form-group">
+            <label>ลูกค้า / Site</label>
+            <ng-select
+              [items]="issueCustomerOptions(list.id)"
+              [(ngModel)]="issueForm.customerName"
+              [addTag]="true"
+              [searchable]="true"
+              [clearable]="true"
+              placeholder="เลือกหรือพิมพ์ชื่อลูกค้า"
+              notFoundText="พิมพ์แล้ว Enter เพื่อเพิ่ม"
+            />
+          </div>
+          <div class="form-group">
+            <label>หัวข้อ *</label>
+            <input type="text" [(ngModel)]="issueForm.title" placeholder="อธิบายปัญหาสั้นๆ" />
+          </div>
+          <div class="form-group">
+            <label>รายละเอียด</label>
+            <textarea [(ngModel)]="issueForm.description" rows="4" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select [(ngModel)]="issueForm.status">
+              @for (s of issueStatusOptions; track s) {
+                <option [ngValue]="s">{{ issueStatusLabel(s) }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ไฟล์แนบ</label>
+            <p class="field-hint">รูปภาพจะแสดง preview — ไฟล์อื่นจะถูก zip ก่อนบันทึก</p>
+            <label class="upload-btn">
+              <i class="ti ti-upload"></i> เลือกไฟล์
+              <input type="file" multiple (change)="onIssueFilesSelected($event)" />
+            </label>
+            @if (issuePendingFiles().length) {
+              <div class="pending-files">
+                @for (file of issuePendingFiles(); track $index; let i = $index) {
+                  <div class="pending-item">
+                    <i class="ti" [class]="isImageFile(file) ? 'ti-photo' : 'ti-file'"></i>
+                    <span>{{ file.name }}</span>
+                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                    <button type="button" class="icon-btn" appTooltip="ลบไฟล์" (click)="removeIssuePendingFile(i)">
+                      <i class="ti ti-x"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="panel-footer">
+        @if (panelError()) {
+          <p class="panel-error">{{ panelError() }}</p>
+        }
+        <button class="btn" (click)="closePanel()">ยกเลิก</button>
+        @if (panelMode() === 'customer') {
+          <button
+            class="btn btn-primary"
+            (click)="saveCustomerPanel()"
+            [disabled]="panelSaving()"
+          >
+            {{ panelSaving() ? 'กำลังบันทึก...' : 'บันทึก' }}
+          </button>
+        }
+        @if (panelMode() === 'issue') {
+          <button
+            class="btn btn-primary"
+            (click)="saveIssuePanel()"
+            [disabled]="panelSaving() || issueUploading() || !issueForm.title.trim()"
+          >
+            {{
+              issueUploading()
+                ? 'กำลังอัปโหลด...'
+                : panelSaving()
+                  ? 'กำลังบันทึก...'
+                  : 'บันทึก'
+            }}
+          </button>
+        }
+      </div>
+    </aside>
+  }
 </div>
 
 @if (showModal()) {
@@ -308,7 +649,7 @@
     <div class="modal modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ editing() ? 'Edit List' : 'Create List' }}</h2>
-        <button class="icon-btn" (click)="showModal.set(false)"><i class="ti ti-x"></i></button>
+        <button class="icon-btn" appTooltip="ปิด" (click)="showModal.set(false)"><i class="ti ti-x"></i></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -325,11 +666,20 @@
           </div>
           @if (customerRows().length) {
             <div class="customer-form-list">
-              @for (row of customerRows(); track $index; let rowIndex = $index) {
+              @for (row of customerRows(); track row.id; let rowIndex = $index) {
                 <div class="customer-form-row">
                   <div class="form-group">
                     <label>ชื่อ Site / ลูกค้า</label>
-                    <input type="text" [(ngModel)]="row.customerName" placeholder="เช่น ACME Corp" />
+                    <ng-select
+                      [items]="customerNameOptions()"
+                      [ngModel]="row.customerName"
+                      (ngModelChange)="updateCustomerRow(rowIndex, { customerName: $event ?? '' })"
+                      [addTag]="true"
+                      [searchable]="true"
+                      [clearable]="true"
+                      placeholder="เลือกหรือพิมพ์ชื่อลูกค้า"
+                      notFoundText="พิมพ์แล้ว Enter เพื่อเพิ่ม"
+                    />
                   </div>
                   <div class="form-group installer-form-group">
                     <label>ผู้ติดตั้ง *</label>
@@ -397,13 +747,22 @@
                   </div>
                   <div class="form-group">
                     <label>วันที่ติดตั้ง</label>
-                    <input type="date" [(ngModel)]="row.installedAt" />
+                    <input
+                      type="date"
+                      [ngModel]="row.installedAt"
+                      (ngModelChange)="updateCustomerRow(rowIndex, { installedAt: $event })"
+                    />
                   </div>
                   <div class="form-group">
                     <label>Test Case URL</label>
-                    <input type="url" [(ngModel)]="row.testCaseUrl" placeholder="https://..." />
+                    <input
+                      type="url"
+                      [ngModel]="row.testCaseUrl"
+                      (ngModelChange)="updateCustomerRow(rowIndex, { testCaseUrl: $event })"
+                      placeholder="https://..."
+                    />
                   </div>
-                  <button type="button" class="icon-btn remove-btn" (click)="removeCustomerRow($index)" title="ลบ">
+                  <button type="button" class="icon-btn remove-btn" appTooltip="ลบแถวลูกค้า" (click)="removeCustomerRow($index)">
                     <i class="ti ti-trash"></i>
                   </button>
                 </div>
@@ -443,8 +802,61 @@
           }
         </div>
         </div>
+
+        @if (editing()) {
+          <div class="form-section" (click)="$event.stopPropagation()">
+            <div class="section-header">
+              <label>Documents</label>
+              <label class="upload-btn btn btn-sm" [class.disabled]="uploadingDocuments() === editing()!.id">
+                <i class="ti ti-upload"></i>
+                {{ uploadingDocuments() === editing()!.id ? 'กำลังอัปโหลด...' : 'อัปโหลดเอกสาร' }}
+                <input
+                  type="file"
+                  multiple
+                  [disabled]="uploadingDocuments() === editing()!.id"
+                  (change)="onDocumentsSelected(editing()!.id, $event)"
+                />
+              </label>
+            </div>
+            @if (editDocuments().length) {
+              <div class="document-list modal-documents">
+                @for (doc of editDocuments(); track doc.id) {
+                  <div class="document-item">
+                    @if (isDocumentImage(doc)) {
+                      <div class="document-image">
+                        <img [src]="doc.url" [alt]="doc.originalName" class="document-thumb" />
+                        <button type="button" class="btn btn-sm view-btn" appTooltip="ดูรูป" (click)="viewDocumentImage(doc, $event)">
+                          View
+                        </button>
+                      </div>
+                    } @else {
+                      <a [href]="doc.url" target="_blank" rel="noopener" class="document-file">
+                        <i class="ti ti-file"></i>
+                        <span class="document-name">{{ doc.originalName }}</span>
+                        <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                      </a>
+                    }
+                    <button
+                      type="button"
+                      class="icon-btn remove-att"
+                      appTooltip="ลบเอกสาร"
+                      (click)="deleteDocument(editing()!.id, doc)"
+                    >
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="section-hint">ยังไม่มีเอกสาร — อัปโหลดไฟล์เพื่อเก็บเอกสารของ list นี้</p>
+            }
+          </div>
+        }
       </div>
       <div class="modal-footer">
+        @if (saveError()) {
+          <p class="save-error">{{ saveError() }}</p>
+        }
         <button class="btn" (click)="showModal.set(false)">ยกเลิก</button>
         <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
           {{ saving() ? 'กำลังบันทึก...' : 'บันทึก' }}

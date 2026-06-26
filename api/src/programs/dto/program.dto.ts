@@ -1,6 +1,8 @@
 import {
   IsArray,
+  IsBoolean,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -12,6 +14,10 @@ export class CreateProgramDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsOptional()
+  @IsInt()
+  osId?: number | null;
 
   @IsOptional()
   @IsString()
@@ -46,6 +52,10 @@ export class UpdateProgramDto {
   name?: string;
 
   @IsOptional()
+  @IsInt()
+  osId?: number | null;
+
+  @IsOptional()
   @IsString()
   version?: string;
 
@@ -73,4 +83,9 @@ export class UpdateProgramDto {
   @IsOptional()
   @IsString()
   note?: string;
+}
+
+export class ToggleProgramActiveDto {
+  @IsBoolean()
+  isActive: boolean;
 }

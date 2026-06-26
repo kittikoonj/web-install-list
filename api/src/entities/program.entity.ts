@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { SettingOs } from './setting-os.entity';
 
 export type InstallMethod = 'offline' | 'docker' | 'online';
 
@@ -9,6 +10,13 @@ export class Program {
 
   @Column({ type: 'varchar', length: 100 })
   name: string;
+
+  @Column({ name: 'os_id', type: 'int', nullable: true })
+  osId: number | null;
+
+  @ManyToOne(() => SettingOs, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'os_id' })
+  os: SettingOs | null;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   version: string | null;
@@ -47,6 +55,9 @@ export class Program {
 
   @Column({ name: 'is_delete', type: 'tinyint', default: 0 })
   isDelete: number;
+
+  @Column({ name: 'is_active', type: 'tinyint', default: 1 })
+  isActive: number;
 
   @Column({ name: 'deleted_by', type: 'varchar', length: 100, nullable: true })
   deletedBy: string | null;

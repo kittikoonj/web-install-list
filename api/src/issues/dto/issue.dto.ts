@@ -24,6 +24,10 @@ export class CreateIssueDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @IsOptional()
   @IsEnum(ISSUE_STATUSES)
   status?: IssueStatusDto;
 }
@@ -42,6 +46,10 @@ export class UpdateIssueDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  customerName?: string;
 
   @IsOptional()
   @IsEnum(ISSUE_STATUSES)

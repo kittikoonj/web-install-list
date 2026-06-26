@@ -5,7 +5,7 @@
 
 .sidebar {
   width: var(--sidebar-width);
-  background: #fff;
+  background: var(--color-surface);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -22,16 +22,18 @@
   gap: 10px;
   padding: 16px 14px;
   border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, var(--color-primary-soft) 0%, var(--color-surface) 100%);
 
   .brand-icon {
     font-size: 24px;
-    color: var(--color-primary);
+    color: var(--color-accent);
   }
 
   .brand-title {
     font-weight: 700;
     font-size: 13px;
     line-height: 1.2;
+    color: var(--color-text);
   }
 
   .brand-sub {
@@ -64,9 +66,9 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  color: #333;
+  color: var(--color-text);
   font-size: 13px;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 
   i {
     font-size: 16px;
@@ -74,13 +76,14 @@
   }
 
   &:hover {
-    background: #f5f5f4;
+    background: var(--color-primary-soft);
   }
 
   &.active {
-    background: #e6f1fb;
+    background: var(--color-primary-soft);
     color: var(--color-primary);
     font-weight: 500;
+    border-right: 3px solid var(--color-accent);
 
     i {
       color: var(--color-primary);
@@ -90,8 +93,8 @@
   .admin-badge {
     margin-left: auto;
     font-size: 10px;
-    background: #eeedfe;
-    color: #3c3489;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
     padding: 1px 6px;
     border-radius: 4px;
   }
@@ -100,11 +103,12 @@
 .sidebar-footer {
   padding: 12px 14px;
   border-top: 1px solid var(--color-border);
-  background: #fafaf9;
+  background: var(--color-bg);
 
   .user-name {
     font-weight: 600;
     font-size: 13px;
+    color: var(--color-text);
   }
 
   .user-role {
@@ -129,4 +133,5 @@
   margin-left: var(--sidebar-width);
   padding: 24px 28px;
   min-height: 100vh;
+  background: var(--color-bg);
 }

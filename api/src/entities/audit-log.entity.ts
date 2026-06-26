@@ -17,6 +17,9 @@ export class AuditLog {
   @Column({ name: 'object_name', type: 'varchar', length: 200, nullable: true })
   objectName: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  details: string | null;
+
   @Column({ name: 'performed_by', type: 'varchar', length: 100, nullable: true })
   performedBy: string | null;
 

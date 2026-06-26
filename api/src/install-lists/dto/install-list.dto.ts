@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -32,7 +33,8 @@ export class InstallListCustomerDto {
   installedAt: string;
 
   @IsOptional()
-  @IsUrl()
+  @ValidateIf((_, value) => value != null && value !== '')
+  @IsUrl({ require_protocol: false })
   testCaseUrl?: string;
 }
 
